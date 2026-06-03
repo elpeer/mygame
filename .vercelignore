@@ -1,0 +1,17 @@
+# Heavy / intermediate files — not needed for the deployed site (which is in /clean)
+/assets/
+/original.html
+/index.html
+/localize_all.js
+/server.js
+/figma_code.jsx
+/figma_code2.jsx
+/figma_assets.json
+/Desktop.pdf
+/Mobile.pdf
+/*.png
+/*.jpg
+/clean/fetch_assets.js
+/clean/server.js
+/clean/index_handbuilt.html.bak
+node_modules/
