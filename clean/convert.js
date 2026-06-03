@@ -156,7 +156,23 @@ function translate(s) {
   return s;
 }
 function toLTR(s) {
-  s = s.split('text-right').join('@@TR@@').split('text-left').join('text-right').split('@@TR@@').join('text-left');
+  // Mirror the RTL-physical layout to LTR by swapping directional utility classes.
+  const pairs = [
+    ['flex-row-reverse', 'flex-row'],
+    ['text-right', 'text-left'],
+    ['items-end', 'items-start'],
+    ['justify-end', 'justify-start'],
+    ['self-end', 'self-start'],
+    ['rounded-tl', 'rounded-tr'],
+    ['rounded-bl', 'rounded-br'],
+    ['pr-[', 'pl-['],
+    ['mr-[', 'ml-['],
+    ['right-[', 'left-['],
+  ];
+  pairs.forEach(function (p, i) {
+    const ph = ' ' + i + ' ';
+    s = s.split(p[0]).join(ph).split(p[1]).join(p[0]).split(ph).join(p[1]);
+  });
   s = s.replace(/dir="rtl"/g, 'dir="ltr"');
   return s;
 }
