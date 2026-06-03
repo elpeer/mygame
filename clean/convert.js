@@ -156,22 +156,25 @@ function translate(s) {
   return s;
 }
 function toLTR(s) {
-  // Mirror the RTL-physical layout to LTR by swapping directional utility classes.
-  const pairs = [
-    ['flex-row-reverse', 'flex-row'],
-    ['text-right', 'text-left'],
-    ['items-end', 'items-start'],
-    ['justify-end', 'justify-start'],
-    ['self-end', 'self-start'],
-    ['rounded-tl', 'rounded-tr'],
-    ['rounded-bl', 'rounded-br'],
-    ['pr-[', 'pl-['],
-    ['mr-[', 'ml-['],
-    ['right-[', 'left-['],
-  ];
-  pairs.forEach(function (p, i) {
-    const ph = ' ' + i + ' ';
-    s = s.split(p[0]).join(ph).split(p[1]).join(p[0]).split(ph).join(p[1]);
+  // True horizontal mirror of the RTL layout, processed per element by flex direction.
+  function swap(c, a, b) { return c.split(a).join('@@_@@').split(b).join(a).split('@@_@@').join(b); }
+  s = s.replace(/class="([^"]*)"/g, function (m, cls) {
+    let c = cls;
+    const isFlex = /(^|\s)(inline-)?flex($|\s)/.test(c);
+    const isCol = /\bflex-col\b/.test(c);
+    c = swap(c, 'text-right', 'text-left');
+    c = swap(c, 'pr-[', 'pl-[');
+    c = swap(c, 'mr-[', 'ml-[');
+    c = swap(c, 'right-[', 'left-[');
+    c = swap(c, 'rounded-tl', 'rounded-tr');
+    c = swap(c, 'rounded-bl', 'rounded-br');
+    if (isFlex && !isCol) {
+      if (/\bflex-row-reverse\b/.test(c)) c = c.replace(/\s*\bflex-row-reverse\b/, '');
+      else c = c + ' flex-row-reverse';
+    } else if (isCol) {
+      c = swap(c, 'items-end', 'items-start');
+    }
+    return 'class="' + c.replace(/\s+/g, ' ').trim() + '"';
   });
   s = s.replace(/dir="rtl"/g, 'dir="ltr"');
   return s;
