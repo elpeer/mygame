@@ -206,6 +206,13 @@ body = body.replace(
   body = body.slice(0, navStart) + NAV + body.slice(navEnd);
 })();
 
+// Remove the Figma top-nav pill (an absolute element inside the scaled canvas, so it
+// can't be sticky and its labels wrap). We render a real fixed sticky header instead.
+{
+  const r = enclosingDivRange(body, 'top-[15px] w-[1454px]');
+  if (r) body = body.slice(0, r[0]) + body.slice(r[1]);
+}
+
 // Mobile layout (hand-built to match Mobile.pdf)
 const MOBILE = fs.readFileSync(path.join(__dirname, 'mobile.html'), 'utf8');
 
@@ -267,11 +274,33 @@ function mirrorBody(b) {
   return t;
 }
 function prefixPaths(s, p) { return p ? s.replace(/(["'(])(img\/|figma-assets\/|fonts\/)/g, '$1' + p + '$2') : s; }
-function langSwitch(href, label) {
-  return `<a href="${href}" style="position:fixed;bottom:16px;right:16px;z-index:9999;background:#fff;border:1px solid #e6e6e6;border-radius:999px;padding:9px 18px;font-weight:700;font-size:15px;color:#21307d;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.15);font-family:system-ui,sans-serif">${label}</a>`;
+
+// Real, sticky top navigation rendered OUTSIDE the scaled canvas (so it can be fixed and
+// crisp). Holds the logo, one-line menu, an integrated language toggle, and the CTA.
+function siteHeader(lang) {
+  const he = lang === 'he';
+  const links = he
+    ? [['#how', 'איך זה עובד'], ['#games', 'כל המשחקים'], ['#faq', 'שאלות ותשובות']]
+    : [['#how', 'How it works'], ['#games', 'All games'], ['#faq', 'FAQ']];
+  const cta = he ? 'בנו משחק עכשיו' : 'Build a game now';
+  const navLinks = links.map(([h, t]) => `<a href="${h}">${t}</a>`).join('');
+  const toggle = `<div class="lang"><a href="/"${he ? ' class="on"' : ''}>עב</a><a href="/en/"${he ? '' : ' class="on"'}>EN</a></div>`;
+  return `<header id="topnav" dir="${he ? 'rtl' : 'ltr'}">
+  <div class="nav-inner">
+    <a class="brand" href="${he ? '/' : '/en/'}"><img src="img/logo.png" alt="mygame" /></a>
+    <nav class="nav-links">${navLinks}</nav>
+    <div class="nav-right">${toggle}<a class="nav-cta" href="#build">${cta}</a></div>
+  </div>
+</header>`;
+}
+// Compact language link for the mobile menu (replaces the old floating button).
+function mobileLang(lang) {
+  return lang === 'he'
+    ? '<a href="/en/" class="border border-[#e3e3e3] rounded-full px-[14px] py-[8px] text-center font-bold text-[14px] text-[#2665d6]">🌐 English</a>'
+    : '<a href="/" class="border border-[#e3e3e3] rounded-full px-[14px] py-[8px] text-center font-bold text-[14px] text-[#2665d6]">🌐 עברית</a>';
 }
 
-function buildPage(lang, frameBody, mobileBody, switcher) {
+function buildPage(lang, frameBody, mobileBody, header) {
   const title = lang === 'en' ? 'The gift that turns any event unforgettable' : 'המתנה שהופכת כל אירוע לבלתי נשכח';
   return `<!DOCTYPE html>
 <html lang="${lang}" dir="ltr">
@@ -298,9 +327,26 @@ function buildPage(lang, frameBody, mobileBody, switcher) {
   #mobile{display:none}
   #mobile,#mobile *{font-family:'Ploni Round AAA','Varela Round','Rubik',system-ui,sans-serif}
   @media (max-width:767px){#stage{display:none}#mobile{display:block}}
+  /* Sticky top navigation (lives outside the scaled canvas) */
+  #topnav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;justify-content:center;padding:14px 22px;box-sizing:border-box;font-family:'Ploni Round AAA','Varela Round','Rubik',system-ui,sans-serif}
+  #topnav .nav-inner{width:100%;max-width:1280px;background:#fff;border-radius:22px;box-shadow:0 6px 20px rgba(0,0,0,.10);display:flex;align-items:center;justify-content:space-between;gap:24px;padding:9px 14px 9px 22px;transition:box-shadow .2s ease,padding .2s ease}
+  #topnav[dir="rtl"] .nav-inner{padding:9px 22px 9px 14px}
+  #topnav.scrolled .nav-inner{box-shadow:0 10px 30px rgba(0,0,0,.16)}
+  #topnav .brand img{height:34px;display:block}
+  #topnav .nav-links{display:flex;align-items:center;gap:30px;flex:1;justify-content:center}
+  #topnav .nav-links a{color:#1e2330;font-weight:600;font-size:16px;text-decoration:none;white-space:nowrap}
+  #topnav .nav-links a:hover{color:#2665d6}
+  #topnav .nav-right{display:flex;align-items:center;gap:14px}
+  #topnav .lang{display:inline-flex;border:1px solid #e4e4e4;border-radius:999px;overflow:hidden;font-weight:700;font-size:13px;line-height:1}
+  #topnav .lang a{padding:7px 12px;color:#666;text-decoration:none}
+  #topnav .lang a.on{background:#2665d6;color:#fff}
+  #topnav .nav-cta{background:#111317;color:#fff;font-weight:700;font-size:15px;border-radius:999px;padding:12px 22px;text-decoration:none;white-space:nowrap}
+  #topnav .nav-cta:hover{background:#2665d6}
+  @media (max-width:767px){#topnav{display:none}}
 </style>
 </head>
 <body>
+${header}
 <div id="stage">
 <div id="frame">
 ${frameBody}
@@ -309,7 +355,9 @@ ${frameBody}
 <div id="mobile">
 ${mobileBody}
 </div>
-${switcher}
+<script>
+  (function(){var hn=document.getElementById('topnav');if(hn)window.addEventListener('scroll',function(){hn.classList.toggle('scrolled',window.scrollY>14);},{passive:true});})();
+</script>
 <script>
   function fit(){var f=document.getElementById('frame'),st=document.getElementById('stage');
     var s=window.innerWidth/1920;f.style.transform='scale('+s+')';
@@ -347,10 +395,10 @@ ${switcher}
 }
 
 // Hebrew (default) + English (LTR)
-const heHtml = buildPage('he', body, MOBILE, langSwitch('/en/', 'English'));
+const heHtml = buildPage('he', body, MOBILE.replace('<!--LANGSWITCH-->', mobileLang('he')), siteHeader('he'));
 fs.writeFileSync(path.join(__dirname, 'index.html'), heHtml, 'utf8');
 
-const enHtml = prefixPaths(buildPage('en', mirrorBody(body), toLTR(translate(MOBILE)), langSwitch('/', 'עברית')), '../');
+const enHtml = prefixPaths(buildPage('en', mirrorBody(body), toLTR(translate(MOBILE)).replace('<!--LANGSWITCH-->', mobileLang('en')), siteHeader('en')), '../');
 fs.mkdirSync(path.join(__dirname, 'en'), { recursive: true });
 fs.writeFileSync(path.join(__dirname, 'en', 'index.html'), enHtml, 'utf8');
 

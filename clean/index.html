@@ -23,9 +23,32 @@
   #mobile{display:none}
   #mobile,#mobile *{font-family:'Ploni Round AAA','Varela Round','Rubik',system-ui,sans-serif}
   @media (max-width:767px){#stage{display:none}#mobile{display:block}}
+  /* Sticky top navigation (lives outside the scaled canvas) */
+  #topnav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;justify-content:center;padding:14px 22px;box-sizing:border-box;font-family:'Ploni Round AAA','Varela Round','Rubik',system-ui,sans-serif}
+  #topnav .nav-inner{width:100%;max-width:1280px;background:#fff;border-radius:22px;box-shadow:0 6px 20px rgba(0,0,0,.10);display:flex;align-items:center;justify-content:space-between;gap:24px;padding:9px 14px 9px 22px;transition:box-shadow .2s ease,padding .2s ease}
+  #topnav[dir="rtl"] .nav-inner{padding:9px 22px 9px 14px}
+  #topnav.scrolled .nav-inner{box-shadow:0 10px 30px rgba(0,0,0,.16)}
+  #topnav .brand img{height:34px;display:block}
+  #topnav .nav-links{display:flex;align-items:center;gap:30px;flex:1;justify-content:center}
+  #topnav .nav-links a{color:#1e2330;font-weight:600;font-size:16px;text-decoration:none;white-space:nowrap}
+  #topnav .nav-links a:hover{color:#2665d6}
+  #topnav .nav-right{display:flex;align-items:center;gap:14px}
+  #topnav .lang{display:inline-flex;border:1px solid #e4e4e4;border-radius:999px;overflow:hidden;font-weight:700;font-size:13px;line-height:1}
+  #topnav .lang a{padding:7px 12px;color:#666;text-decoration:none}
+  #topnav .lang a.on{background:#2665d6;color:#fff}
+  #topnav .nav-cta{background:#111317;color:#fff;font-weight:700;font-size:15px;border-radius:999px;padding:12px 22px;text-decoration:none;white-space:nowrap}
+  #topnav .nav-cta:hover{background:#2665d6}
+  @media (max-width:767px){#topnav{display:none}}
 </style>
 </head>
 <body>
+<header id="topnav" dir="rtl">
+  <div class="nav-inner">
+    <a class="brand" href="/"><img src="img/logo.png" alt="mygame" /></a>
+    <nav class="nav-links"><a href="#how">איך זה עובד</a><a href="#games">כל המשחקים</a><a href="#faq">שאלות ותשובות</a></nav>
+    <div class="nav-right"><div class="lang"><a href="/" class="on">עב</a><a href="/en/">EN</a></div><a class="nav-cta" href="#build">בנו משחק עכשיו</a></div>
+  </div>
+</header>
 <div id="stage">
 <div id="frame">
 
@@ -915,35 +938,7 @@
           </div>
         </div>
       </div>
-      <div class="-translate-x-1/2 absolute backdrop-blur-[8.85px] bg-white content-stretch drop-shadow-[0px_4px_10px_rgba(0,0,0,0.12)] flex h-[80px] items-center left-1/2 rounded-[23px] top-[15px] w-[1454px]">
-        <div class="content-stretch flex flex-col h-full items-start justify-center pl-[14px] relative shrink-0 w-[242px]">
-          <div class="bg-[#1e2330] content-stretch flex h-[52px] items-center justify-center px-[40px] py-[8px] relative rounded-[47px] shrink-0">
-            <p class="[text-box-edge:cap_alphabetic] [text-box-trim:trim-both] [word-break:break-word] font-medium leading-[1.5] not-italic relative shrink-0 text-[18px] text-right text-white" dir="auto">
-              בנו משחק עכשיו
-            </p>
-          </div>
-        </div>
-        <div class="content-stretch flex flex-[1_0_0] h-full items-center justify-center min-w-px relative">
-          <div class="[word-break:break-word] content-stretch flex font-normal gap-[32px] h-full items-center leading-[normal] not-italic relative shrink-0 text-[16px] text-black text-center">
-            <p class="relative shrink-0 w-[101px]" dir="auto">
-              שאלות ותשובות
-            </p>
-            <p class="relative shrink-0 w-[86px]" dir="auto">
-              כל המשחקים
-            </p>
-            <p class="relative shrink-0 w-[76px]" dir="auto">
-              איך זה עובד
-            </p>
-          </div>
-        </div>
-        <div class="content-stretch flex flex-col h-full items-end justify-center pr-[14px] relative shrink-0 w-[242px]">
-          <div class="h-[64.877px] relative shrink-0 w-[234px]">
-            <div class="absolute inset-0 overflow-hidden pointer-events-none">
-              <img alt="" class="absolute h-[201.31%] left-0 max-w-none top-[-49.41%] w-full" src="figma-assets/img1B4Cc80CF42D4216Af8D862A22Ac21281.png" />
-            </div>
-          </div>
-        </div>
-      </div>
+      
     </div>
   
 </div>
@@ -960,6 +955,7 @@
     </div>
     <nav id="mNav" dir="rtl" class="hidden bg-white rounded-[18px] mt-[8px] p-[14px] flex-col gap-[10px] text-right text-[#1e2330] font-semibold">
       <a href="#mhow">איך זה עובד</a><a href="#mgames">כל המשחקים</a><a href="#mfaq">שאלות ותשובות</a>
+      <a href="/en/" class="border border-[#e3e3e3] rounded-full px-[14px] py-[8px] text-center font-bold text-[14px] text-[#2665d6]">🌐 English</a>
     </nav>
   </header>
 
@@ -1119,7 +1115,9 @@
 </div>
 
 </div>
-<a href="/en/" style="position:fixed;bottom:16px;right:16px;z-index:9999;background:#fff;border:1px solid #e6e6e6;border-radius:999px;padding:9px 18px;font-weight:700;font-size:15px;color:#21307d;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.15);font-family:system-ui,sans-serif">English</a>
+<script>
+  (function(){var hn=document.getElementById('topnav');if(hn)window.addEventListener('scroll',function(){hn.classList.toggle('scrolled',window.scrollY>14);},{passive:true});})();
+</script>
 <script>
   function fit(){var f=document.getElementById('frame'),st=document.getElementById('stage');
     var s=window.innerWidth/1920;f.style.transform='scale('+s+')';
