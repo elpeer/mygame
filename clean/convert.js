@@ -95,7 +95,7 @@ const medals = Array.from({ length: 10 }, (_, i) =>
 const GAME_TYPES = `<div dir="rtl" class="bg-[#f3f0e9] w-full flex flex-col items-center py-[96px] px-[60px]">
   <h2 class="text-[64px] font-extrabold text-[#1e2330] text-center leading-[1.05] mb-[56px]">סוגי משחקים <span class="text-[#9a9a86]">(קלילים, ממכרים, כיפיים)</span></h2>
   <div class="w-full max-w-[1500px] flex flex-col gap-[28px]">
-    <div class="flex flex-row-reverse gap-[28px] items-start">
+    <div class="flex flex-row-reverse gap-[28px] items-stretch">
       <div class="bg-[#F5CCF5] rounded-[44px] p-[40px] w-[37%] flex flex-col gap-[20px] text-right">
         <h3 class="text-[40px] font-extrabold text-[#1e2330]">משחקי זריזות</h3>
         <img src="img/gt-speed.png" alt="משחקי זריזות" class="w-full" />
@@ -118,9 +118,9 @@ const GAME_TYPES = `<div dir="rtl" class="bg-[#f3f0e9] w-full flex flex-col item
         </div>
       </div>
     </div>
-    <div class="flex flex-row-reverse gap-[28px] items-start">
-      <div class="bg-[#780016] rounded-[44px] p-[40px] flex-1 text-white text-right flex flex-col gap-[18px]">
-        <img src="img/gt-prizes.png" alt="" class="w-[94%] mx-auto" />
+    <div class="flex flex-row-reverse gap-[28px] items-stretch">
+      <div class="bg-[#780016] rounded-[44px] p-[40px] flex-1 text-white text-right flex flex-col justify-center gap-[18px]">
+        <img src="img/gt-prizes.png" alt="" class="w-[50%] mx-auto" />
         <h3 class="text-[40px] font-extrabold">פרסים בהתאמה אישית</h3>
         <p class="text-[21px] leading-[1.5]">פרסים שנראים כמו אתם. מעוצבים, מצחיקים ומדויקים לאופי של הקבוצה או החוגג. לא עוד גביע גנרי שאוסף אבק.</p>
       </div>
@@ -156,15 +156,55 @@ function enclosingDivRange(html, anchor) {
 const togR = enclosingDivRange(body, 'w-[464px]');
 if (togR) body = body.slice(0, togR[0]) + body.slice(togR[1]);
 
-// Add the transparent falafel mockup to the maroon "no bullshit" section
-// (the Figma HR-variant frame lacks it; PDF shows it on the left).
+// Maroon "no bullshit" section: the Figma frame's image slot is empty and it carries
+// broken, mis-cropped maroon sprite duplicates (the "grid" blocks). Strip those and drop
+// in a clean phone mockup (cropped from the busy composite) on the left — per the PDF.
 const nbR = sectionRange(body, 'בלי בולשיט');
 if (nbR) {
-  const openEnd = body.indexOf('>', nbR[0]) + 1;
-  const tag = body.slice(nbR[0], openEnd).replace('class="', 'class="relative ');
-  const falafel = '<img src="img/falafel.png" alt="FALAFEL MUSAVIAN" style="position:absolute;left:7%;top:50%;transform:translateY(-50%);width:33%;max-width:620px;z-index:5;pointer-events:none" />';
-  body = body.slice(0, nbR[0]) + tag + falafel + body.slice(openEnd);
+  let sec = body.slice(nbR[0], nbR[1]);
+  sec = sec.replace(/<img[^>]*src="(?:figma-assets\/)?img417513[^"]*"[^>]*\/>/g, '');
+  const openEnd = sec.indexOf('>') + 1;
+  const tag = sec.slice(0, openEnd).replace('class="', 'class="relative ');
+  const phone = '<img src="img/falafel-phone.png" alt="FALAFEL MUSAVIAN" style="position:absolute;left:7%;top:50%;transform:translateY(-50%);width:17%;max-width:260px;z-index:5;pointer-events:none" />';
+  sec = tag + phone + sec.slice(openEnd);
+  body = body.slice(0, nbR[0]) + sec + body.slice(nbR[1]);
 }
+
+// Final CTA: swap the licensed Framer stock photo for the supplied image and keep the
+// headline on a single line (it wraps awkwardly in English otherwise).
+body = body.replace(/src="[^"]*imgImage1441\.png"/g, 'src="img/cta-ice.png"');
+body = body.replace(/(<p\b[^>]*?)(>\s*מוכנים לשבור את הקרח)/, '$1 style="white-space:nowrap"$2');
+
+// Carousel cleanup: remove the black avatar placeholder circles, replace the broken
+// zoomed/offset image crops with a clean object-cover fit, and rebuild the nav arrows.
+let _bz = 0;
+while (_bz < 8) {
+  const r = enclosingDivRange(body, 'bg-black');
+  if (!r) break;
+  body = body.slice(0, r[0]) + body.slice(r[1]);
+  _bz++;
+}
+body = body.replace(
+  /(<div class="aspect-\[277\/277\][^]*?<img alt="" class=")absolute h-\[[^\]]+\] left-\[[^\]]+\] max-w-none top-\[[^\]]+\] w-\[[^\]]+\]("[^>]*\/>)/g,
+  '$1absolute inset-0 w-full h-full object-cover$2');
+// rebuild the two carousel nav arrow buttons (broken chevron transforms)
+(function () {
+  const hi = body.indexOf('ששוברים את השגרה');
+  if (hi < 0) return;
+  const jb = body.lastIndexOf('justify-between', hi);
+  if (jb < 0) return;
+  const rowDiv = body.lastIndexOf('<div', jb);
+  const gt = body.indexOf('>', rowDiv) + 1;
+  const navStart = body.indexOf('<div', gt);
+  if (navStart < 0 || navStart > hi) return;
+  const re = /<div\b|<\/div>/g; re.lastIndex = navStart;
+  let depth = 0, m, navEnd = -1;
+  while ((m = re.exec(body))) { if (m[0] === '</div>') { depth--; if (depth === 0) { navEnd = re.lastIndex; break; } } else depth++; }
+  if (navEnd < 0) return;
+  const chev = (pts) => `<button class="bg-white rounded-full size-[56px] flex items-center justify-center" style="box-shadow:0 4px 14px rgba(0,0,0,.1)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1e2330" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="${pts}"/></svg></button>`;
+  const NAV = `<div class="flex gap-[12px] items-center shrink-0">${chev('15 18 9 12 15 6')}${chev('9 18 15 12 9 6')}</div>`;
+  body = body.slice(0, navStart) + NAV + body.slice(navEnd);
+})();
 
 // Mobile layout (hand-built to match Mobile.pdf)
 const MOBILE = fs.readFileSync(path.join(__dirname, 'mobile.html'), 'utf8');
