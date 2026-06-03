@@ -206,6 +206,23 @@ body = body.replace(
   body = body.slice(0, navStart) + NAV + body.slice(navEnd);
 })();
 
+// Hero badge: keep "מקום הראשון" on a single line.
+body = body.replace(/<span class="leading-\[normal\]">(\s*<br[^>]*\/>\s*מקום הראשון)/, '<span class="leading-[normal]" style="white-space:nowrap;display:inline-block">$1');
+// "Who is it for" splat + a few spots: Figma uses leading-[0] on text wrappers, which makes
+// wrapped lines overlap once the inner line-height utility is stripped. Use a real line-height.
+body = body.split('leading-[0]').join('leading-[1.35]');
+
+// Desktop FAQ: the Figma frame only exported the first answer. Add the other two so the
+// accordion actually has content to reveal.
+const FAQ_ANS = [
+  ['אפשר לקבוע פרסים?', 'בהחלט. אפשר להוסיף פרסים אמיתיים או דיגיטליים, מותאמים אישית לחוגג ולקבוצה.'],
+  ['זה מתאים גם למי שלא אוהב משחקים?', 'כן! המשחקים קלילים ואינטואיטיביים – צריך רק אצבע, חיוך וקצת תחרותיות.'],
+];
+for (const [q, a] of FAQ_ANS) {
+  const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*</p>)');
+  body = body.replace(re, '$1<p class="font-normal leading-[1.5] relative shrink-0 text-[18px] text-[rgba(0,0,0,0.68)] w-full" dir="auto">' + a + '</p>');
+}
+
 // Remove the Figma top-nav pill (an absolute element inside the scaled canvas, so it
 // can't be sticky and its labels wrap). We render a real fixed sticky header instead.
 {
@@ -357,6 +374,23 @@ ${mobileBody}
 </div>
 <script>
   (function(){var hn=document.getElementById('topnav');if(hn)window.addEventListener('scroll',function(){hn.classList.toggle('scrolled',window.scrollY>14);},{passive:true});})();
+  // Desktop FAQ accordion (open/close)
+  function initFaq(){
+    var fh=[].slice.call(document.querySelectorAll('#frame *')).find(function(e){return e.children.length===0&&/^(שאלות נפוצות|FAQ)$/.test(e.textContent.trim());});
+    if(!fh)return;
+    var sec=fh.parentElement;
+    var cont=[].slice.call(sec.querySelectorAll('div')).filter(function(d){return [].slice.call(d.children).filter(function(c){return c.textContent.indexOf('?')>-1;}).length>=2;}).sort(function(a,b){return b.children.length-a.children.length;})[0];
+    if(!cont)return;
+    [].slice.call(cont.children).forEach(function(item,idx){
+      var ps=item.querySelectorAll('p'); if(ps.length<2||item.textContent.indexOf('?')<0)return;
+      var ans=ps[ps.length-1];
+      ans.style.overflow='hidden'; ans.style.transition='max-height .28s ease,opacity .2s ease';
+      function set(open){ans.style.maxHeight=open?(ans.scrollHeight+'px'):'0px';ans.style.opacity=open?'1':'0';item.setAttribute('data-open',open?'1':'0');}
+      set(idx===0); item.style.cursor='pointer';
+      item.addEventListener('click',function(){set(item.getAttribute('data-open')!=='1');});
+    });
+  }
+  setTimeout(initFaq,400); setTimeout(initFaq,1400);
 </script>
 <script>
   function fit(){var f=document.getElementById('frame'),st=document.getElementById('stage');

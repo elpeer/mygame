@@ -111,6 +111,8 @@ module.exports = {
   "בדרך כלל ימים ספורים. לא חודשים. אנחנו לא בונים GTA.": "Usually a few days. Not months. We're not building GTA.",
   "אפשר לקבוע פרסים?": "Can we set up prizes?",
   "זה מתאים גם למי שלא אוהב משחקים?": "Is it good even for people who don't like games?",
+  "בהחלט. אפשר להוסיף פרסים אמיתיים או דיגיטליים, מותאמים אישית לחוגג ולקבוצה.": "Absolutely. You can add real or digital prizes, tailored to the star and the group.",
+  "כן! המשחקים קלילים ואינטואיטיביים – צריך רק אצבע, חיוך וקצת תחרותיות.": "Yes! The games are light and intuitive — just a finger, a smile and a little competitiveness.",
   "יש לכם שאלות נוספות? דברו איתנו": "Got more questions? Talk to us",
   "בואו נבנה את המשחק שלכם": "Let's build your game",
 

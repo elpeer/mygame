@@ -105,9 +105,9 @@
                 </div>
               </div>
               <div class="absolute bg-[#39383c] h-[56px] left-[95.24px] top-[19.5px] w-[129px]" ></div>
-              <p class="-translate-x-full [word-break:break-word] absolute font-bold font-bold leading-[0] left-[224.24px] not-italic text-[20.759px] text-right text-white top-[22.29px]" dir="rtl">
+              <p class="-translate-x-full [word-break:break-word] absolute font-bold font-bold leading-[1.35] left-[224.24px] not-italic text-[20.759px] text-right text-white top-[22.29px]" dir="rtl">
                 <span class="font-medium font-medium leading-[normal]">Amitush</span>
-                <span class="leading-[normal]">
+                <span class="leading-[normal]" style="white-space:nowrap;display:inline-block">
                   <br aria-hidden="true" />
                   1st place 
                 </span>
@@ -135,7 +135,7 @@
         </div>
         <div class="content-stretch flex flex-col gap-[34px] items-start relative shrink-0 w-[756.478px]">
           <div class="[word-break:break-word] content-stretch flex flex-col gap-[25px] items-start not-italic relative shrink-0 text-left w-full">
-            <p class="font-medium font-medium leading-[0] min-w-full relative shrink-0 text-[#d2e823] text-[0px] w-[min-content]" dir="auto">
+            <p class="font-medium font-medium leading-[1.35] min-w-full relative shrink-0 text-[#d2e823] text-[0px] w-[min-content]" dir="auto">
               <span class="font-extrabold leading-[0.88] text-[91.279px]">The gift that turns any event </span>
               <span class="font-extrabold leading-[0.88] text-[91.279px]">unforgettable</span>
             </p>
@@ -205,7 +205,7 @@
                 <p class="font-semibold leading-[1.2] min-w-full relative shrink-0 text-[24px] w-[min-content]" dir="auto">
                   We build a game that looks and feels like “them”
                 </p>
-                <div class="font-normal leading-[0] relative shrink-0 text-[18px] w-[305px] whitespace-pre-wrap">
+                <div class="font-normal leading-[1.35] relative shrink-0 text-[18px] w-[305px] whitespace-pre-wrap">
                   <p class="leading-[1.5] mb-0" dir="auto">The hero is whoever's celebrating. </p>
                   <p class="leading-[1.5]" dir="auto"> The style, the messages, the vibe — everything gets a personal twist. </p>
                 </div>
@@ -386,7 +386,7 @@
           <img alt="" class="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src="../figma-assets/imgRectangle22565.png" />
         </div>
         <div class="bg-[#f5ccf5] content-stretch flex flex-[1_0_0] flex-col gap-[42px] h-full items-start justify-center min-w-px px-[120px] relative">
-          <p class="[word-break:break-word] font-medium leading-[0] not-italic relative shrink-0 text-[0px] text-black text-left w-[663px]" dir="auto">
+          <p class="[word-break:break-word] font-medium leading-[1.35] not-italic relative shrink-0 text-[0px] text-black text-left w-[663px]" dir="auto">
             <span class="font-bold leading-none text-[64px]">A perfect solution</span>
             <span class="font-bold leading-none text-[64px]"> for a close friend, or even as a team-building game</span>
           </p>
@@ -470,7 +470,7 @@
               <p class="[word-break:break-word] absolute font-bold inset-[16.12%_20.72%_72.04%_20.72%] leading-[1.5] not-italic text-[24px] text-black text-center" dir="auto">
                 A perfect solution for people who love
               </p>
-              <div class="[word-break:break-word] absolute font-normal inset-[29.28%_13.16%_17.43%_13.16%] leading-[0] not-italic text-[18px] text-black text-center">
+              <div class="[word-break:break-word] absolute font-normal inset-[29.28%_13.16%_17.43%_13.16%] leading-[1.35] not-italic text-[18px] text-black text-center">
                 <p class="leading-[1.5] mb-0" dir="auto">
                   an especially original gift
                   <br aria-hidden="true" />
@@ -816,7 +816,7 @@
             <div class="content-stretch flex flex-[1_0_0] flex-col items-end min-w-px relative">
               <p class="[text-box-edge:cap_alphabetic] [text-box-trim:trim-both] [word-break:break-word] font-semibold leading-[1.2] not-italic relative shrink-0 text-[24px] text-black text-left w-full" dir="auto">
                 Can we set up prizes?
-              </p>
+              </p><p class="font-normal leading-[1.5] relative shrink-0 text-[18px] text-[rgba(0,0,0,0.68)] w-full" dir="auto">Absolutely. You can add real or digital prizes, tailored to the star and the group.</p>
             </div>
           </div>
           <div class="bg-white content-stretch flex gap-[24px] items-center p-[20px] relative rounded-[40px] shrink-0 w-full flex-row-reverse">
@@ -830,7 +830,7 @@
             <div class="content-stretch flex flex-[1_0_0] flex-col items-end min-w-px relative">
               <p class="[text-box-edge:cap_alphabetic] [text-box-trim:trim-both] [word-break:break-word] font-semibold leading-[1.2] not-italic relative shrink-0 text-[24px] text-black text-left w-full" dir="auto">
                 Is it good even for people who don't like games?
-              </p>
+              </p><p class="font-normal leading-[1.5] relative shrink-0 text-[18px] text-[rgba(0,0,0,0.68)] w-full" dir="auto">Yes! The games are light and intuitive — just a finger, a smile and a little competitiveness.</p>
             </div>
           </div>
         </div>
@@ -1117,6 +1117,23 @@
 </div>
 <script>
   (function(){var hn=document.getElementById('topnav');if(hn)window.addEventListener('scroll',function(){hn.classList.toggle('scrolled',window.scrollY>14);},{passive:true});})();
+  // Desktop FAQ accordion (open/close)
+  function initFaq(){
+    var fh=[].slice.call(document.querySelectorAll('#frame *')).find(function(e){return e.children.length===0&&/^(שאלות נפוצות|FAQ)$/.test(e.textContent.trim());});
+    if(!fh)return;
+    var sec=fh.parentElement;
+    var cont=[].slice.call(sec.querySelectorAll('div')).filter(function(d){return [].slice.call(d.children).filter(function(c){return c.textContent.indexOf('?')>-1;}).length>=2;}).sort(function(a,b){return b.children.length-a.children.length;})[0];
+    if(!cont)return;
+    [].slice.call(cont.children).forEach(function(item,idx){
+      var ps=item.querySelectorAll('p'); if(ps.length<2||item.textContent.indexOf('?')<0)return;
+      var ans=ps[ps.length-1];
+      ans.style.overflow='hidden'; ans.style.transition='max-height .28s ease,opacity .2s ease';
+      function set(open){ans.style.maxHeight=open?(ans.scrollHeight+'px'):'0px';ans.style.opacity=open?'1':'0';item.setAttribute('data-open',open?'1':'0');}
+      set(idx===0); item.style.cursor='pointer';
+      item.addEventListener('click',function(){set(item.getAttribute('data-open')!=='1');});
+    });
+  }
+  setTimeout(initFaq,400); setTimeout(initFaq,1400);
 </script>
 <script>
   function fit(){var f=document.getElementById('frame'),st=document.getElementById('stage');
