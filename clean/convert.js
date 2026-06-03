@@ -75,7 +75,7 @@ for (const [from, to] of PDF_TEXT) body = body.split(from).join(to);
 // 8c) "who is it for" pill icons: the HR sprite (imgImage88) -> clean event icons, in DOM order.
 const PILL_ICONS = ['occ-birthday', 'occ-proposal', 'occ-family', 'occ-wedding', 'occ-mitzvah', 'occ-special'];
 let _pi = 0;
-body = body.replace(/<img[^>]*src="figma-assets\/imgImage88\.png"\s*\/>/g,
+body = body.replace(/<img[^>]*src="(?:figma-assets\/)?imgImage88\.png"\s*\/>/g,
   () => `<img alt="" class="absolute inset-0 size-full object-contain" src="img/${PILL_ICONS[_pi++] || 'occ-special'}.png" />`);
 
 // 8d) Rebuild the "game types" bento to match the PDF (the Figma frame's version is an
@@ -149,12 +149,30 @@ if (nbR) {
 // Mobile layout (hand-built to match Mobile.pdf)
 const MOBILE = fs.readFileSync(path.join(__dirname, 'mobile.html'), 'utf8');
 
-const html = `<!DOCTYPE html>
-<html lang="he" dir="ltr">
+// ---- i18n: build Hebrew (default) + English (LTR) ----
+const EN = require('./translations.js');
+function translate(s) {
+  for (const he of Object.keys(EN).sort((a, b) => b.length - a.length)) s = s.split(he).join(EN[he]);
+  return s;
+}
+function toLTR(s) {
+  s = s.split('text-right').join('@@TR@@').split('text-left').join('text-right').split('@@TR@@').join('text-left');
+  s = s.replace(/dir="rtl"/g, 'dir="ltr"');
+  return s;
+}
+function prefixPaths(s, p) { return p ? s.replace(/(["'(])(img\/|figma-assets\/|fonts\/)/g, '$1' + p + '$2') : s; }
+function langSwitch(href, label) {
+  return `<a href="${href}" style="position:fixed;bottom:16px;right:16px;z-index:9999;background:#fff;border:1px solid #e6e6e6;border-radius:999px;padding:9px 18px;font-weight:700;font-size:15px;color:#21307d;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.15);font-family:system-ui,sans-serif">${label}</a>`;
+}
+
+function buildPage(lang, frameBody, mobileBody, switcher) {
+  const title = lang === 'en' ? 'The gift that turns any event unforgettable' : 'המתנה שהופכת כל אירוע לבלתי נשכח';
+  return `<!DOCTYPE html>
+<html lang="${lang}" dir="ltr">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>המתנה שהופכת כל אירוע לבלתי נשכח</title>
+<title>${title}</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -179,12 +197,13 @@ const html = `<!DOCTYPE html>
 <body>
 <div id="stage">
 <div id="frame">
-${body}
+${frameBody}
 </div>
 </div>
 <div id="mobile">
-${MOBILE}
+${mobileBody}
 </div>
+${switcher}
 <script>
   function fit(){var f=document.getElementById('frame'),st=document.getElementById('stage');
     var s=window.innerWidth/1920;f.style.transform='scale('+s+')';
@@ -219,5 +238,14 @@ ${MOBILE}
 </body>
 </html>`;
 
-fs.writeFileSync(path.join(__dirname, 'index.html'), html, 'utf8');
-console.log('Wrote index.html —', html.length, 'chars. Assets mapped:', Object.keys(fileFor).length);
+}
+
+// Hebrew (default) + English (LTR)
+const heHtml = buildPage('he', body, MOBILE, langSwitch('en/', 'English'));
+fs.writeFileSync(path.join(__dirname, 'index.html'), heHtml, 'utf8');
+
+const enHtml = prefixPaths(buildPage('en', toLTR(translate(body)), toLTR(translate(MOBILE)), langSwitch('../', 'עברית')), '../');
+fs.mkdirSync(path.join(__dirname, 'en'), { recursive: true });
+fs.writeFileSync(path.join(__dirname, 'en', 'index.html'), enHtml, 'utf8');
+
+console.log('Wrote index.html (' + heHtml.length + ') + en/index.html (' + enHtml.length + ')');

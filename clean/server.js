@@ -24,6 +24,8 @@ const server = http.createServer((req, res) => {
   try {
     let urlPath = decodeURIComponent(req.url.split('?')[0]);
     if (urlPath === '/') urlPath = '/index.html';
+    if (urlPath.endsWith('/')) urlPath += 'index.html';
+    if (!path.extname(urlPath)) urlPath += '/index.html'; // /en -> /en/index.html
     const filePath = path.join(ROOT, path.normalize(urlPath));
     if (!filePath.startsWith(ROOT)) { res.writeHead(403); return res.end('Forbidden'); }
     fs.readFile(filePath, (err, data) => {
