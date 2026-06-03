@@ -1,0 +1,16 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node
+node_modules/
+*.log
+
+# Framer mirror — 52MB intermediate copy of the original site.
+# The clean, hand-owned site lives in /clean. The mirror is not deployed.
+/assets/
+/original.html
+/index.html
+/localize_all.js
+/figma_code2.jsx

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>המתנה שהופכת כל אירוע לבלתי נשכח</title>
+  <meta name="description" content="משחק אישי שנבנה סביבו/סביבה – עם תמונה, בדיחות פנימיות, ואתגרים שכולם מתמכרים אליהם." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Varela+Round&family=Rubik:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ===== Header ===== -->
+  <header class="hdr">
+    <div class="hdr__bar">
+      <a href="#cta" class="hdr__cta">בנו משחק עכשיו</a>
+      <nav class="hdr__nav" id="nav">
+        <a href="#how">איך זה עובד</a>
+        <a href="#games">כל המשחקים</a>
+        <a href="#faq">שאלות ותשובות</a>
+      </nav>
+      <a href="#top" class="hdr__logo">mygame</a>
+      <button class="hdr__burger" id="burger" aria-label="תפריט">☰</button>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- ===== Hero ===== -->
+    <section class="hero">
+      <div class="hero__inner">
+        <div class="hero__art">
+          <img class="hero__mockup" src="img/hero-mockup.png" alt="משחק לדוגמה — ליגת האלופות" />
+          <span class="chip chip--green chip--tl">🎮 בונים משחק שובר</span>
+          <span class="chip chip--dark chip--ml">❌ עמיתוש · מקום הראשון</span>
+          <span class="chip chip--dark chip--br">🏆 ניקוד 12,500</span>
+        </div>
+        <div class="hero__text">
+          <h1 class="hero__title">המתנה שהופכת כל אירוע לבלתי נשכח</h1>
+          <p class="hero__sub">משחק אישי שנבנה סביבו/סביבה – עם תמונה, בדיחות פנימיות, ואתגרים שכולם מתמכרים אליהם</p>
+          <a href="#cta" class="btn-lime hero__cta">
+            <span>בונים משחק אישי עכשיו</span>
+            <img class="btn-lime__ico" src="img/ic-spark.svg" alt="" />
+          </a>
+          <div class="hero__point">
+            <img src="img/ic-gift.png" alt="" />
+            <span>מקבלים משחק שאי אפשר להפסיק לשחק בו</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Section 2 (placeholder heading — cards next) ===== -->
+    <section class="simple" id="how">
+      <h2 class="simple__title">זה כל כך פשוט, שלא תצטרכו לעשות כלום</h2>
+      <p class="simple__todo">— הסקשן הזה (3 כרטיסי המשחק המוטים) נבנה בשלב הבא —</p>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

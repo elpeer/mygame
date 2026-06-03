@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "clean-site",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["clean/server.js"],
+      "port": 8125
+    }
+  ]
+}
