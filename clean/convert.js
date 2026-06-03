@@ -179,6 +179,33 @@ function toLTR(s) {
   s = s.replace(/dir="rtl"/g, 'dir="ltr"');
   return s;
 }
+// Find the range of the first child <div> of the element whose opening tag contains `parentAnchor`.
+function divFirstChildRange(html, parentAnchor) {
+  const ai = html.indexOf(parentAnchor);
+  if (ai < 0) return null;
+  const parentGt = html.indexOf('>', ai) + 1;
+  const childStart = html.indexOf('<div', parentGt);
+  if (childStart < 0) return null;
+  const re = /<div\b|<\/div>/g; re.lastIndex = childStart;
+  let depth = 0, m;
+  while ((m = re.exec(html))) {
+    if (m[0] === '</div>') { depth--; if (depth === 0) return [childStart, re.lastIndex]; }
+    else depth++;
+  }
+  return null;
+}
+// Translate + mirror the desktop body, but protect the hero phone-mockup composition
+// (its floating chips break under mirroring) so it renders like the Hebrew version.
+function mirrorBody(b) {
+  let t = translate(b);
+  const mr = divFirstChildRange(t, 'bg-[#2665d6]');
+  if (mr) {
+    const mock = t.slice(mr[0], mr[1]);
+    t = t.slice(0, mr[0]) + '@@MOCK@@' + t.slice(mr[1]);
+    t = toLTR(t).replace('@@MOCK@@', mock);
+  } else { t = toLTR(t); }
+  return t;
+}
 function prefixPaths(s, p) { return p ? s.replace(/(["'(])(img\/|figma-assets\/|fonts\/)/g, '$1' + p + '$2') : s; }
 function langSwitch(href, label) {
   return `<a href="${href}" style="position:fixed;bottom:16px;right:16px;z-index:9999;background:#fff;border:1px solid #e6e6e6;border-radius:999px;padding:9px 18px;font-weight:700;font-size:15px;color:#21307d;text-decoration:none;box-shadow:0 6px 18px rgba(0,0,0,.15);font-family:system-ui,sans-serif">${label}</a>`;
@@ -263,7 +290,7 @@ ${switcher}
 const heHtml = buildPage('he', body, MOBILE, langSwitch('en/index.html', 'English'));
 fs.writeFileSync(path.join(__dirname, 'index.html'), heHtml, 'utf8');
 
-const enHtml = prefixPaths(buildPage('en', toLTR(translate(body)), toLTR(translate(MOBILE)), langSwitch('../index.html', 'עברית')), '../');
+const enHtml = prefixPaths(buildPage('en', mirrorBody(body), toLTR(translate(MOBILE)), langSwitch('../index.html', 'עברית')), '../');
 fs.mkdirSync(path.join(__dirname, 'en'), { recursive: true });
 fs.writeFileSync(path.join(__dirname, 'en', 'index.html'), enHtml, 'utf8');
 
