@@ -347,10 +347,10 @@ ${switcher}
 }
 
 // Hebrew (default) + English (LTR)
-const heHtml = buildPage('he', body, MOBILE, langSwitch('en/index.html', 'English'));
+const heHtml = buildPage('he', body, MOBILE, langSwitch('/en/', 'English'));
 fs.writeFileSync(path.join(__dirname, 'index.html'), heHtml, 'utf8');
 
-const enHtml = prefixPaths(buildPage('en', mirrorBody(body), toLTR(translate(MOBILE)), langSwitch('../index.html', 'עברית')), '../');
+const enHtml = prefixPaths(buildPage('en', mirrorBody(body), toLTR(translate(MOBILE)), langSwitch('/', 'עברית')), '../');
 fs.mkdirSync(path.join(__dirname, 'en'), { recursive: true });
 fs.writeFileSync(path.join(__dirname, 'en', 'index.html'), enHtml, 'utf8');
 
