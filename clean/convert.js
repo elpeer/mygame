@@ -136,6 +136,26 @@ const GAME_TYPES = `<div dir="rtl" class="bg-[#f3f0e9] w-full flex flex-col item
 const gtRange = sectionRange(body, 'סוגי משחקים');
 if (gtRange) body = body.slice(0, gtRange[0]) + GAME_TYPES + body.slice(gtRange[1]);
 
+// 8e) Let long text wrap — Figma hard-codes `whitespace-nowrap` sized for the exact
+// Hebrew strings, so English (and some Hebrew) overflow / overlap. Strip it.
+body = body.replace(/ whitespace-nowrap/g, '');
+
+// 8f) Remove the "Gifts for individuals / Companies & organizations" toggle (not wanted).
+function enclosingDivRange(html, anchor) {
+  const ai = html.indexOf(anchor);
+  if (ai < 0) return null;
+  const start = html.lastIndexOf('<div', ai);
+  const re = /<div\b|<\/div>/g; re.lastIndex = start;
+  let depth = 0, m;
+  while ((m = re.exec(html))) {
+    if (m[0] === '</div>') { depth--; if (depth === 0) return [start, re.lastIndex]; }
+    else depth++;
+  }
+  return null;
+}
+const togR = enclosingDivRange(body, 'w-[464px]');
+if (togR) body = body.slice(0, togR[0]) + body.slice(togR[1]);
+
 // Add the transparent falafel mockup to the maroon "no bullshit" section
 // (the Figma HR-variant frame lacks it; PDF shows it on the left).
 const nbR = sectionRange(body, 'בלי בולשיט');
