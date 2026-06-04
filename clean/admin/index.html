@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>mygame — ניהול תוכן</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  *{font-family:'Rubik',system-ui,sans-serif}
+  body{background:#f4f5f7}
+  .lbl{font-size:12px;font-weight:600;color:#8a8f98}
+  input,textarea{transition:border-color .15s}
+  input:focus,textarea:focus{outline:none;border-color:#2665d6;box-shadow:0 0 0 3px rgba(38,101,214,.12)}
+</style>
+</head>
+<body class="text-[#1e2330]">
+<!-- LOGIN -->
+<div id="login" class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-[380px] bg-white rounded-3xl shadow-xl p-8">
+    <div class="text-center mb-6">
+      <div class="text-3xl font-extrabold tracking-tight">mygame</div>
+      <div class="text-[#8a8f98] mt-1">מערכת ניהול תוכן</div>
+    </div>
+    <label class="lbl">שם משתמש</label>
+    <input id="u" class="w-full border border-[#e2e4e9] rounded-xl px-4 py-3 mt-1 mb-4" autocomplete="username" />
+    <label class="lbl">סיסמה</label>
+    <input id="p" type="password" class="w-full border border-[#e2e4e9] rounded-xl px-4 py-3 mt-1 mb-2" autocomplete="current-password" />
+    <div id="loginErr" class="text-red-500 text-sm h-5 mb-2"></div>
+    <button id="loginBtn" class="w-full bg-[#111317] text-white font-bold rounded-xl py-3 hover:bg-[#2665d6] transition">כניסה</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <header class="sticky top-0 z-20 bg-white border-b border-[#eceef1]">
+    <div class="max-w-[1100px] mx-auto px-5 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="text-xl font-extrabold">mygame</span>
+        <span class="text-[#8a8f98] text-sm hidden sm:inline">ניהול תוכן</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <input id="search" placeholder="חיפוש…" class="border border-[#e2e4e9] rounded-full px-4 py-2 text-sm w-[160px] sm:w-[220px]" />
+        <button id="saveBtn" class="bg-[#2665d6] text-white font-bold rounded-full px-5 py-2 text-sm hover:bg-[#1b51b0] transition disabled:opacity-50">שמירה ופרסום</button>
+        <button id="logout" class="text-[#8a8f98] text-sm px-2 hover:text-[#1e2330]">יציאה</button>
+      </div>
+    </div>
+    <div class="max-w-[1100px] mx-auto px-5 flex gap-1 -mb-px">
+      <button class="tabBtn px-4 py-2 text-sm font-semibold border-b-2 border-[#2665d6] text-[#2665d6]" data-tab="text">טקסטים</button>
+      <button class="tabBtn px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-[#8a8f98]" data-tab="img">תמונות</button>
+    </div>
+  </header>
+
+  <div id="savedNote" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 bg-[#16a34a] text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-lg z-30">נשמר ופורסם ✓</div>
+
+  <main class="max-w-[1100px] mx-auto px-5 py-6">
+    <p class="text-[#8a8f98] text-sm mb-4">עריכת התוכן בעברית ובאנגלית. שינויים נשמרים ל‑Supabase ומתפרסמים מיד לאתר החי.</p>
+    <div id="list" class="grid gap-3"></div>
+  </main>
+</div>
+
+<script>
+var SUPA='https://xvlobuotrihngqvuwyka.supabase.co';
+var ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2bG9idW90cmlobmdxdnV3eWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1OTk5ODAsImV4cCI6MjA4NTE3NTk4MH0.i9VSgaEjzJDm9D64TqN7AY7kbBIL9F8bahs-dDp9B-g';
+var H={apikey:ANON,Authorization:'Bearer '+ANON,'Content-Type':'application/json'};
+var CREDS=null, FIELDS=[], OV={}, TAB='text';
+
+function rpc(fn,body){return fetch(SUPA+'/rest/v1/rpc/'+fn,{method:'POST',headers:H,body:JSON.stringify(body)}).then(function(r){return r.json();});}
+
+function doLogin(){
+  var u=document.getElementById('u').value.trim(), p=document.getElementById('p').value;
+  document.getElementById('loginErr').textContent='';
+  rpc('cms_login',{p_user:u,p_pass:p}).then(function(ok){
+    if(ok===true){CREDS={u:u,p:p};sessionStorage.setItem('cms',JSON.stringify(CREDS));start();}
+    else document.getElementById('loginErr').textContent='שם משתמש או סיסמה שגויים';
+  }).catch(function(){document.getElementById('loginErr').textContent='שגיאת חיבור';});
+}
+document.getElementById('loginBtn').onclick=doLogin;
+document.getElementById('p').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin();});
+
+function start(){
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  Promise.all([
+    fetch('/cms-fields.json').then(function(r){return r.json();}),
+    fetch(SUPA+'/rest/v1/site_content?id=eq.1&select=data',{headers:H}).then(function(r){return r.json();})
+  ]).then(function(res){
+    FIELDS=res[0]; OV=(res[1]&&res[1][0]&&res[1][0].data)||{}; render();
+  });
+}
+function render(){
+  var q=(document.getElementById('search').value||'').toLowerCase();
+  var list=document.getElementById('list'); list.innerHTML='';
+  FIELDS.filter(function(f){return f.type===TAB;}).forEach(function(f){
+    var rec=OV[f.k]||{};
+    var hay=((f.he||'')+(f.en||'')+(f.label||'')+(f.k||'')).toLowerCase();
+    if(q && hay.indexOf(q)<0) return;
+    var card=document.createElement('div');
+    card.className='bg-white rounded-2xl border border-[#eceef1] p-4';
+    if(f.type==='text'){
+      card.innerHTML=
+        '<div class="grid sm:grid-cols-2 gap-3">'
+        +'<div><div class="lbl mb-1">עברית</div><textarea data-k="'+esc(f.k)+'" data-l="he" dir="rtl" rows="2" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm resize-y"></textarea></div>'
+        +'<div><div class="lbl mb-1">English</div><textarea data-k="'+esc(f.k)+'" data-l="en" dir="ltr" rows="2" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm resize-y"></textarea></div>'
+        +'</div>';
+      list.appendChild(card);
+      var tas=card.querySelectorAll('textarea');
+      tas[0].value=(rec.he!=null?rec.he:f.he)||'';
+      tas[1].value=(rec.en!=null?rec.en:f.en)||'';
+    } else if(f.type==='img'){
+      card.innerHTML=
+        '<div class="flex items-center gap-4">'
+        +'<img src="" class="prev w-16 h-16 object-contain rounded-lg bg-[#f4f5f7] border border-[#eceef1]" />'
+        +'<div class="flex-1">'
+        +'<div class="font-semibold text-sm mb-0.5">'+esc(f.label||f.k)+'</div>'
+        +'<div class="lbl mb-1">קובץ נוכחי: '+esc(f.k)+'</div>'
+        +'<input data-k="'+esc(f.k)+'" data-l="url" dir="ltr" placeholder="הדביקו כתובת תמונה (URL)…" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm" />'
+        +'</div></div>';
+      list.appendChild(card);
+      var inp=card.querySelector('input'), prev=card.querySelector('.prev');
+      inp.value=rec.url||'';
+      prev.src=rec.url||('/img/'+f.k);
+      inp.addEventListener('input',function(){prev.src=inp.value||('/img/'+f.k);});
+    }
+  });
+}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+function collect(){
+  // start from existing overrides, update from inputs, drop values equal to defaults
+  var data=JSON.parse(JSON.stringify(OV));
+  document.querySelectorAll('#list [data-k]').forEach(function(el){
+    var k=el.getAttribute('data-k'), l=el.getAttribute('data-l'), v=el.value;
+    var f=FIELDS.find(function(x){return x.k===k;}); if(!f)return;
+    data[k]=data[k]||{};
+    if(l==='url'){ if(v.trim())data[k].url=v.trim(); else delete data[k].url; }
+    else { var def=(l==='he'?f.he:f.en)||''; if(v!==def) data[k][l]=v; else delete data[k][l]; }
+    if(Object.keys(data[k]).length===0) delete data[k];
+  });
+  return data;
+}
+document.getElementById('saveBtn').onclick=function(){
+  var btn=this; btn.disabled=true; var data=collect();
+  rpc('cms_save',{p_user:CREDS.u,p_pass:CREDS.p,p_data:data}).then(function(ok){
+    btn.disabled=false;
+    if(ok===true){OV=data;var n=document.getElementById('savedNote');n.classList.remove('hidden');setTimeout(function(){n.classList.add('hidden');},2200);}
+    else alert('שמירה נכשלה — התחברו מחדש');
+  }).catch(function(){btn.disabled=false;alert('שגיאת חיבור בשמירה');});
+};
+document.getElementById('search').addEventListener('input',render);
+document.getElementById('logout').onclick=function(){sessionStorage.removeItem('cms');location.reload();};
+document.querySelectorAll('.tabBtn').forEach(function(b){b.onclick=function(){
+  TAB=b.getAttribute('data-tab');
+  document.querySelectorAll('.tabBtn').forEach(function(x){x.className='tabBtn px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-[#8a8f98]';});
+  b.className='tabBtn px-4 py-2 text-sm font-semibold border-b-2 border-[#2665d6] text-[#2665d6]';
+  render();
+};});
+
+// auto-login from session
+(function(){var s=sessionStorage.getItem('cms');if(s){try{CREDS=JSON.parse(s);start();}catch(e){}}})();
+</script>
+</body>
+</html>

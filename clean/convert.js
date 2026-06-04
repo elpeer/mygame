@@ -423,10 +423,23 @@ ${mobileBody}
     }
   })();
 </script>
+<script src="/cms.js" defer></script>
 </body>
 </html>`;
 
 }
+
+// ---- CMS field manifest (consumed by /cms.js and /admin) ----
+// Every translatable string becomes an editable text field (HE + EN). Plus key images.
+const CMS_FIELDS = [];
+for (const he of Object.keys(EN)) {
+  if (!he.trim()) continue;
+  CMS_FIELDS.push({ k: he, type: 'text', he: he, en: EN[he], section: 'טקסטים' });
+}
+[['logo.png', 'לוגו'], ['cta-ice.png', 'תמונת CTA (האישה)'], ['falafel-phone.png', 'טלפון פלאפל'],
+ ['hero-mockup.png', 'תמונת גיבור (מובייל)'], ['gt-prizes.png', 'תמונת פרסים'], ['leaderboard.png', 'טבלת דירוג']
+].forEach(([k, label]) => CMS_FIELDS.push({ k, type: 'img', label, section: 'תמונות' }));
+fs.writeFileSync(path.join(__dirname, 'cms-fields.json'), JSON.stringify(CMS_FIELDS));
 
 // Hebrew (default) + English (LTR)
 const heHtml = buildPage('he', body, MOBILE.replace('<!--LANGSWITCH-->', mobileLang('he')), siteHeader('he'));
