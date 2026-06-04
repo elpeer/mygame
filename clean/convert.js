@@ -186,16 +186,16 @@ const GC_CARDS = [
   { he: 'טניס זוגות', tags: ['ספורט', 'תחרות'], img: 'game-basket.png' },
   { he: 'אורזים ניירת עם טלי', tags: ['זריזות', 'הומור'], img: 'game-summary.png' },
 ];
-const gcCard = (c) => `<div class="bg-white rounded-[40px] p-[26px] shrink-0 w-[340px] flex flex-col gap-[16px]" style="scroll-snap-align:start">
+const gcCard = (c) => `<div class="gc-card bg-white rounded-[40px] p-[26px] shrink-0 w-[340px] flex flex-col gap-[16px] transition-colors duration-200" style="scroll-snap-align:start"${c.hoverColor ? ` data-hovercolor="${c.hoverColor}"` : ''}>
         <h3 class="text-[26px] font-extrabold text-[#1e2330] leading-[1.12]">${c.he}</h3>
         <div class="flex gap-[10px]">${c.tags.map(t => `<span class="bg-[#f3f0e9] rounded-full px-[15px] py-[6px] text-[15px] font-medium text-[#1e2330]">${t}</span>`).join('')}</div>
-        <div class="w-full aspect-square rounded-[26px] overflow-hidden"><img src="img/${c.img}" alt="${c.he}" class="w-full h-full object-cover" /></div>
+        <div class="relative w-full aspect-square rounded-[26px] overflow-hidden"><img src="img/${c.img}" alt="${c.he}" class="gc-img w-full h-full object-cover" />${c.video ? `<video class="gc-vid absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-200" src="${c.video}" muted loop playsinline preload="none"></video>` : ''}</div>
       </div>`;
 const gcChev = (dir, pts) => `<button type="button" data-gc="${dir}" class="bg-white rounded-full size-[56px] flex items-center justify-center shrink-0" style="box-shadow:0 4px 14px rgba(0,0,0,.1)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1e2330" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="${pts}"/></svg></button>`;
 const GAMES_CAROUSEL = `<div dir="rtl" class="bg-[#f3f0e9] w-full flex flex-col items-center py-[80px] px-[60px]">
       <div class="w-full max-w-[1500px] flex items-center justify-between mb-[40px] gap-[24px]">
         <div class="flex gap-[12px] shrink-0">${gcChev('prev', '15 18 9 12 15 6')}${gcChev('next', '9 18 15 12 9 6')}</div>
-        <h2 class="text-[52px] font-extrabold text-[#1e2330] text-right leading-[1.05]">משחקים קלילים ששוברים את השגרה</h2>
+        <h2 class="text-[52px] font-extrabold text-[#1e2330] text-right leading-[1.05]"><span id="sec-games"></span>משחקים קלילים ששוברים את השגרה</h2>
       </div>
       <div id="gcDeck" class="w-full max-w-[1500px] flex gap-[28px] overflow-x-auto pb-[18px]" style="scroll-snap-type:x mandatory;scrollbar-width:none;-ms-overflow-style:none">
         ${GC_CARDS.map(gcCard).join('')}
@@ -203,6 +203,13 @@ const GAMES_CAROUSEL = `<div dir="rtl" class="bg-[#f3f0e9] w-full flex flex-col 
     </div>`;
 const gcR = sectionRange(body, 'ששוברים את השגרה');
 if (gcR) body = body.slice(0, gcR[0]) + GAMES_CAROUSEL + body.slice(gcR[1]);
+
+// Section anchors so nav links + footer links can scroll to the right section.
+[['זה כל כך פשוט', 'sec-how'], ['למה זו מתנה גאונית', 'sec-why'], ['למי זה מתאים', 'sec-who'],
+ ['סוגי משחקים', 'sec-types'], ['בלי בולשיט', 'sec-nobs'], ['שאלות נפוצות', 'sec-faq'],
+ ['מוכנים לשבור את הקרח', 'sec-cta']].forEach(([t, id]) => {
+  body = body.replace(t, '<span id="' + id + '"></span>' + t);
+});
 
 // Hero badge: keep "מקום הראשון" on a single line.
 body = body.replace(/<span class="leading-\[normal\]">(\s*<br[^>]*\/>\s*מקום הראשון)/, '<span class="leading-[normal]" style="white-space:nowrap;display:inline-block">$1');
@@ -295,8 +302,8 @@ function prefixPaths(s, p) { return p ? s.replace(/(["'(])(img\/|figma-assets\/|
 function siteHeader(lang) {
   const he = lang === 'he';
   const links = he
-    ? [['#how', 'איך זה עובד'], ['#games', 'כל המשחקים'], ['#faq', 'שאלות ותשובות']]
-    : [['#how', 'How it works'], ['#games', 'All games'], ['#faq', 'FAQ']];
+    ? [['#sec-how', 'איך זה עובד'], ['#sec-games', 'כל המשחקים'], ['#sec-faq', 'שאלות ותשובות']]
+    : [['#sec-how', 'How it works'], ['#sec-games', 'All games'], ['#sec-faq', 'FAQ']];
   const cta = he ? 'בנו משחק עכשיו' : 'Build a game now';
   const navLinks = links.map(([h, t]) => `<a href="${h}">${t}</a>`).join('');
   const toggle = `<div class="lang"><a href="/"${he ? ' class="on"' : ''}>עב</a><a href="/en/"${he ? '' : ' class="on"'}>EN</a></div>`;
@@ -400,6 +407,25 @@ ${mobileBody}
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire);else wire();
     setTimeout(wire,1500);
   })();
+  // Carousel card hover: swap to video + change colour
+  window.gcWireCards=function(){
+    document.querySelectorAll('#gcDeck .gc-card').forEach(function(card){
+      if(card._w)return; card._w=1;
+      var hc=card.getAttribute('data-hovercolor'), vid=card.querySelector('.gc-vid');
+      card.addEventListener('mouseenter',function(){ if(hc)card.style.backgroundColor=hc; if(vid){vid.style.opacity='1';try{vid.play();}catch(e){}} });
+      card.addEventListener('mouseleave',function(){ card.style.backgroundColor=''; if(vid){vid.style.opacity='0';try{vid.pause();}catch(e){}} });
+    });
+  };
+  setTimeout(window.gcWireCards,200); setTimeout(window.gcWireCards,1600);
+  // Smooth in-page navigation to sections
+  var TEXT2SEC={'איך זה עובד':'sec-how','How it works':'sec-how','כל המשחקים':'sec-games','All games':'sec-games','שאלות ותשובות':'sec-faq','FAQ':'sec-faq'};
+  function smoothTo(id){var el=document.getElementById(id);if(!el)return;var y=el.getBoundingClientRect().top+window.scrollY-90;window.scrollTo({top:y,behavior:'smooth'});}
+  document.addEventListener('click',function(e){
+    var a=e.target.closest?e.target.closest('a'):null; if(!a)return;
+    var href=a.getAttribute('href')||'';
+    if(href.indexOf('#sec-')===0){e.preventDefault();smoothTo(href.slice(1));return;}
+    if(href==='#'){var id=TEXT2SEC[(a.textContent||'').trim()];if(id){e.preventDefault();smoothTo(id);}}
+  });
 </script>
 <script>
   function fit(){var f=document.getElementById('frame'),st=document.getElementById('stage');
@@ -451,7 +477,7 @@ const SECMAP = [
   ['carousel', 'carousel', 'קרוסלת משחקים', 7],
   ['no bullshit', 'nobs', 'בלי בולשיט', 8],
   ['faq (desktop)', 'faq', 'שאלות נפוצות', 9],
-  ['faq (mobile)', 'faqm', 'שאלות נפוצות (מובייל)', 10],
+  ['faq (mobile)', 'faq', 'שאלות נפוצות', 9],
   ['final cta', 'footer', 'CTA, תפריט וכותרת תחתונה', 11],
 ];
 const SECTION_OF = {};
@@ -488,14 +514,32 @@ const IMG_LABEL = {
   'occ-birthday.png': 'יום הולדת', 'occ-proposal.png': 'הצעת נישואים', 'occ-family.png': 'מפגש משפחתי',
   'occ-wedding.png': 'חתונה', 'occ-mitzvah.png': 'בר/בת מצווה', 'occ-special.png': 'אירוע מיוחד',
 };
+// Which section each image belongs to (so it sits inside that section's management).
+const IMG_SECTION = {
+  'hero-mockup.png': 'hero', 'hero-main.png': 'hero', 'hero-deco.png': 'hero', 'hero-chip.png': 'hero',
+  'imgImage133.png': 'hero',
+  'step-1.png': 'how', 'step-2.png': 'how', 'step-3.png': 'how',
+  'why-deco.png': 'why',
+  'forwho-deco.png': 'who', 'occ-birthday.png': 'who', 'occ-proposal.png': 'who', 'occ-family.png': 'who',
+  'occ-wedding.png': 'who', 'occ-mitzvah.png': 'who', 'occ-special.png': 'who',
+  'gt-speed.png': 'types', 'gt-twist.png': 'types', 'gt-sport.png': 'types', 'gt-prizes.png': 'types',
+  'leaderboard.png': 'types', 'type-speed.png': 'types', 'type-twist.png': 'types', 'type-twist2.png': 'types',
+  'falafel-phone.png': 'nobs', 'falafel.png': 'nobs',
+  'logo.png': 'footer', 'cta-ice.png': 'footer', 'cta-woman.png': 'footer', 'cta-bg.png': 'footer',
+  'cta-1.png': 'footer', 'cta-2.png': 'footer', 'cta-banner.png': 'footer',
+};
+const SEC_META = { hero: ['גיבור (Hero)', 2], how: ['איך זה עובד', 3], why: ['למה זו מתנה גאונית', 4], who: ['למי זה מתאים', 5], types: ['סוגי משחקים', 6], nobs: ['בלי בולשיט', 8], footer: ['CTA, תפריט וכותרת תחתונה', 11] };
 const imgSeen = {};
 const scanImgs = (txt, dev) => {
   const re = /src="(?:\.\.\/)?(?:img|figma-assets)\/([^"?]+\.(?:png|jpg|jpeg|webp))"/g;
   let m; while ((m = re.exec(txt))) { (imgSeen[m[1]] = imgSeen[m[1]] || new Set()).add(dev); }
 };
 scanImgs(body, 'desktop'); scanImgs(MOBILE, 'mobile');
-Object.keys(imgSeen).sort((a, b) => (IMG_LABEL[b] ? 1 : 0) - (IMG_LABEL[a] ? 1 : 0) || a.localeCompare(b)).forEach((fn) =>
-  CMS_FIELDS.push({ k: fn, type: 'img', label: IMG_LABEL[fn] || fn, section: 'images', sectionName: '🖼️ תמונות', order: 50, devices: Array.from(imgSeen[fn]) }));
+Object.keys(imgSeen).sort((a, b) => (IMG_LABEL[b] ? 1 : 0) - (IMG_LABEL[a] ? 1 : 0) || a.localeCompare(b)).forEach((fn) => {
+  const sid = IMG_SECTION[fn];
+  const meta = sid && SEC_META[sid];
+  CMS_FIELDS.push({ k: fn, type: 'img', label: IMG_LABEL[fn] || fn, section: sid || 'images', sectionName: meta ? meta[0] : '🖼️ תמונות נוספות', order: meta ? meta[1] : 50, devices: Array.from(imgSeen[fn]) });
+});
 
 // Link targets for every button / footer link (the CMS sets their href).
 const LINK_FIELDS = [
@@ -517,7 +561,7 @@ LINK_FIELDS.forEach(([he, label]) => {
 fs.writeFileSync(path.join(__dirname, 'cms-fields.json'), JSON.stringify(CMS_FIELDS));
 
 // Bilingual carousel defaults for the CMS (titles + tags translated for English).
-const GC_FULL = GC_CARDS.map(c => ({ he: c.he, en: translate(c.he), img: c.img, tags: c.tags.slice(), tagsEn: c.tags.map(translate) }));
+const GC_FULL = GC_CARDS.map(c => ({ he: c.he, en: translate(c.he), img: c.img, tags: c.tags.slice(), tagsEn: c.tags.map(translate), video: c.video || '', hoverColor: c.hoverColor || '' }));
 fs.writeFileSync(path.join(__dirname, 'cms-carousel.json'), JSON.stringify(GC_FULL));
 
 // Hebrew (default) + English (LTR)

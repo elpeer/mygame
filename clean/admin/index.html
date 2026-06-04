@@ -171,27 +171,49 @@ function bindInputs(scope){
     });
   });
 }
+var PREVSEC={hero:'',how:'how',why:'why',who:'who',types:'types',carousel:'games',nobs:'nobs',faq:'faq',footer:'cta'};
+function sectionPreview(sid){
+  if(!(sid in PREVSEC))return null;
+  var anchor=PREVSEC[sid], mobile=DEV==='mobile';
+  var wrap=document.createElement('div'); wrap.className='mb-4 rounded-xl overflow-hidden border border-[#e6e8eb] bg-[#f4f5f7]';
+  wrap.innerHTML='<div class="lbl px-3 py-1.5 flex items-center justify-between"><span>👁 תצוגה חיה של הסקשן</span><span class="text-[#c2c6cc]">'+(mobile?'מובייל':'דסקטופ')+'</span></div>';
+  var ifr=document.createElement('iframe');
+  ifr.src='/?cms=preview'+(anchor?('&sec='+anchor):'');
+  ifr.className='cms-prev block bg-white mx-auto'; ifr.setAttribute('loading','lazy'); ifr.setAttribute('scrolling','no');
+  ifr.style.cssText='border:0;width:'+(mobile?'390px':'100%')+';height:'+(mobile?'560px':'320px')+';pointer-events:none';
+  wrap.appendChild(ifr); return wrap;
+}
+function reloadPreviews(){ document.querySelectorAll('iframe.cms-prev').forEach(function(f){ f.src=f.src; }); }
 function render(){
   var q=(document.getElementById('search').value||'').toLowerCase();
   var secs=sectionsForDevice();
   var sb=document.getElementById('sidebar'); sb.innerHTML='';
-  secs.forEach(function(s){var a=document.createElement('a');a.className='navlink';a.textContent=s.name;a.onclick=function(){var el=document.getElementById('sec_'+s.id);if(el){el.querySelector('.acc-b').style.display='';el.scrollIntoView({behavior:'smooth',block:'start'});}};sb.appendChild(a);});
+  secs.forEach(function(s){var a=document.createElement('a');a.className='navlink';a.textContent=s.name;a.onclick=function(){var el=document.getElementById('sec_'+s.id);if(el){el.querySelector('.acc-h').click();el.scrollIntoView({behavior:'smooth',block:'start'});}};sb.appendChild(a);});
   var root=document.getElementById('sections'); root.innerHTML='';
   var first=true;
   secs.forEach(function(s){
-    var fields=FIELDS.filter(function(f){return f.section===s.id&&f.devices.indexOf(DEV)>=0;})
+    var devOk=(s.id==='faq')?function(){return true;}:function(f){return f.devices.indexOf(DEV)>=0;};
+    var all=FIELDS.filter(function(f){return f.section===s.id;}).filter(devOk)
       .filter(function(f){if(!q)return true;return((f.he||'')+(f.en||'')+(f.label||'')).toLowerCase().indexOf(q)>=0;});
-    var count = s.id==='carousel'? CARDS.length : fields.length;
+    var texts=all.filter(function(f){return f.type==='text'||f.type==='link';});
+    var imgs=all.filter(function(f){return f.type==='img';});
+    var count = s.id==='carousel'? CARDS.length : all.length;
     if(s.id!=='carousel' && !count) return;
     var open = !!q || first; first=false;
     var sec=document.createElement('section'); sec.id='sec_'+s.id; sec.className='bg-white rounded-2xl border border-[#eceef1] overflow-hidden';
-    var unit = s.id==='images'?'תמונות':(s.id==='carousel'?'כרטיסיות':'שדות');
-    sec.innerHTML='<button type="button" class="acc-h w-full flex items-center justify-between px-4 py-3 text-right hover:bg-[#fafbfc]"><span class="font-extrabold">'+esc(s.name)+'</span><span class="text-xs text-[#9aa0a8] font-semibold">'+count+' '+unit+'</span></button><div class="acc-b border-t border-[#f1f2f4] p-4" '+(open?'':'style="display:none"')+'></div>';
+    var unit = s.id==='carousel'?'כרטיסיות':(all.length+' שדות');
+    sec.innerHTML='<button type="button" class="acc-h w-full flex items-center justify-between px-4 py-3 text-right hover:bg-[#fafbfc]"><span class="font-extrabold">'+esc(s.name)+'</span><span class="text-xs text-[#9aa0a8] font-semibold">'+(s.id==='carousel'?count+' כרטיסיות':unit)+'</span></button><div class="acc-b border-t border-[#f1f2f4] p-4" '+(open?'':'style="display:none"')+'></div>';
     var bodyEl=sec.querySelector('.acc-b');
-    if(s.id==='carousel'){ bodyEl.appendChild(carouselEditor()); }
-    else if(s.id==='images'){ bodyEl.appendChild(imageGrid(fields)); bindInputs(bodyEl); }
-    else { var wrap=document.createElement('div'); wrap.className='grid gap-3'; wrap.innerHTML=fields.map(fieldCard).join(''); bodyEl.appendChild(wrap); bindInputs(bodyEl); }
-    sec.querySelector('.acc-h').onclick=function(){ bodyEl.style.display = bodyEl.style.display==='none'?'':'none'; };
+    function fill(){
+      if(bodyEl._filled)return; bodyEl._filled=1;
+      if(!q){ var pv=sectionPreview(s.id); if(pv)bodyEl.appendChild(pv); }
+      if(s.id==='carousel'){ bodyEl.appendChild(carouselEditor()); return; }
+      if(texts.length){ var tw=document.createElement('div'); tw.className='grid gap-3'; tw.innerHTML=texts.map(fieldCard).join(''); bodyEl.appendChild(tw); }
+      if(imgs.length){ var ih=document.createElement('div'); ih.className='mt-4'; ih.innerHTML='<div class="lbl mb-2">🖼️ תמונות הסקשן</div>'; ih.appendChild(imageGrid(imgs)); bodyEl.appendChild(ih); }
+      bindInputs(bodyEl);
+    }
+    if(open)fill();
+    sec.querySelector('.acc-h').onclick=function(){ var hidden=bodyEl.style.display==='none'; bodyEl.style.display=hidden?'':'none'; if(hidden)fill(); };
     root.appendChild(sec);
   });
 }
@@ -211,6 +233,8 @@ function carouselEditor(){
         +'<div><div class="lbl mb-1">תגיות עברית (פסיק)</div><input data-i="'+i+'" data-f="tags" dir="rtl" value="'+esc((c.tags||[]).join(', '))+'" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div>'
         +'<div><div class="lbl mb-1">Tags English (comma)</div><input data-i="'+i+'" data-f="tagsEn" dir="ltr" value="'+esc((c.tagsEn||[]).join(', '))+'" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div>'
         +'<div class="sm:col-span-2"><div class="lbl mb-1">תמונה (שם קובץ או URL) · <label class="text-[#2665d6] font-bold cursor-pointer hover:underline">⬆ העלאה<input type="file" accept="image/*" data-cardup="'+i+'" class="hidden"/></label></div><input data-i="'+i+'" data-f="img" dir="ltr" value="'+esc(c.img||'')+'" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div>'
+        +'<div><div class="lbl mb-1">🎨 צבע הכרטיסיה בהובר</div><div class="flex items-center gap-2"><input data-i="'+i+'" data-f="hoverColor" type="color" value="'+esc(c.hoverColor||'#ffffff')+'" class="h-9 w-12 border border-[#e2e4e9] rounded-lg cursor-pointer"/><input data-i="'+i+'" data-f="hoverColorText" dir="ltr" value="'+esc(c.hoverColor||'')+'" placeholder="#RRGGBB" class="flex-1 border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div></div>'
+        +'<div><div class="lbl mb-1">🎬 וידאו בהובר · <label class="text-[#2665d6] font-bold cursor-pointer hover:underline">⬆ העלאה<input type="file" accept="video/*" data-cardvid="'+i+'" class="hidden"/></label></div><input data-i="'+i+'" data-f="video" dir="ltr" value="'+esc(c.video||'')+'" placeholder="URL וידאו (mp4/webm)…" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div>'
         +'</div>'
         +'<button data-rm="'+i+'" class="text-red-500 text-sm font-semibold shrink-0 hover:underline">מחיקה</button>'
         +'</div>';
@@ -222,8 +246,20 @@ function carouselEditor(){
       inp.addEventListener('input',function(){
         var i=+inp.getAttribute('data-i'),f=inp.getAttribute('data-f'),v=inp.value;
         if(f==='tags'||f==='tagsEn')CARDS[i][f]=v.split(',').map(function(s){return s.trim();}).filter(Boolean);
+        else if(f==='hoverColorText'){CARDS[i].hoverColor=v;var cp=inp.parentElement.querySelector('input[data-f="hoverColor"]');if(cp&&/^#[0-9a-fA-F]{6}$/.test(v))cp.value=v;}
+        else if(f==='hoverColor'){CARDS[i].hoverColor=v;var tx=inp.parentElement.querySelector('input[data-f="hoverColorText"]');if(tx)tx.value=v;}
         else CARDS[i][f]=v;
         if(f==='img'){var pv=inp.closest('.bg-white').querySelector('.cpv');if(pv)pv.src=(v&&/^https?:|^\//.test(v))?v:('/img/'+v);}
+      });
+    });
+    box.querySelectorAll('input[data-cardvid]').forEach(function(up){
+      up.addEventListener('change',function(){
+        var file=up.files&&up.files[0]; if(!file)return; var i=+up.getAttribute('data-cardvid');
+        var lab=up.parentElement,old=lab.firstChild.textContent; lab.firstChild.textContent='מעלה…';
+        uploadImage(file,function(err,url){ lab.firstChild.textContent=old;
+          if(err){alert('העלאה נכשלה: '+err.message);return;}
+          CARDS[i].video=url; var card=up.closest('.bg-white'); var vi=card.querySelector('input[data-f="video"]'); if(vi)vi.value=url;
+        });
       });
     });
     box.querySelectorAll('input[data-cardup]').forEach(function(up){
@@ -260,7 +296,7 @@ document.getElementById('saveBtn').onclick=function(){
   if(JSON.stringify(CARDS)!==JSON.stringify(DEF_CARDS)) data.carousel=CARDS;
   rpc('cms_save',{p_user:CREDS.u,p_pass:CREDS.p,p_data:data}).then(function(ok){
     btn.disabled=false;
-    if(ok===true){OV.desktop=data.desktop;OV.mobile=data.mobile;OV.carousel=data.carousel||null;var n=document.getElementById('savedNote');n.classList.remove('hidden');setTimeout(function(){n.classList.add('hidden');},2200);}
+    if(ok===true){OV.desktop=data.desktop;OV.mobile=data.mobile;OV.carousel=data.carousel||null;reloadPreviews();var n=document.getElementById('savedNote');n.classList.remove('hidden');setTimeout(function(){n.classList.add('hidden');},2200);}
     else alert('שמירה נכשלה — התחברו מחדש');
   }).catch(function(){btn.disabled=false;alert('שגיאת חיבור בשמירה');});
 };

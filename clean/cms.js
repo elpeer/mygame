@@ -67,16 +67,18 @@
     var tags = lang === 'en' ? (c.tagsEn || c.tags || []) : (c.tags || []);
     var img = c.img || '';
     if (img && !/^https?:|^\//.test(img)) img = '/img/' + img;
-    return '<div class="bg-white rounded-[40px] p-[26px] shrink-0 w-[340px] flex flex-col gap-[16px]" style="scroll-snap-align:start">'
+    var vid = c.video ? '<video class="gc-vid absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-200" src="' + esc(c.video) + '" muted loop playsinline preload="none"></video>' : '';
+    return '<div class="gc-card bg-white rounded-[40px] p-[26px] shrink-0 w-[340px] flex flex-col gap-[16px] transition-colors duration-200" style="scroll-snap-align:start"' + (c.hoverColor ? ' data-hovercolor="' + esc(c.hoverColor) + '"' : '') + '>'
       + '<h3 class="text-[26px] font-extrabold text-[#1e2330] leading-[1.12]">' + esc(title) + '</h3>'
       + '<div class="flex gap-[10px]">' + tags.map(function (t) { return '<span class="bg-[#f3f0e9] rounded-full px-[15px] py-[6px] text-[15px] font-medium text-[#1e2330]">' + esc(t) + '</span>'; }).join('') + '</div>'
-      + '<div class="w-full aspect-square rounded-[26px] overflow-hidden"><img src="' + img + '" alt="" class="w-full h-full object-cover" /></div>'
+      + '<div class="relative w-full aspect-square rounded-[26px] overflow-hidden"><img src="' + img + '" alt="" class="gc-img w-full h-full object-cover" />' + vid + '</div>'
       + '</div>';
   }
   function renderCarousel(cards) {
     if (!cards || !cards.length) return;
     var deck = document.getElementById('gcDeck'); if (!deck) return;
     deck.innerHTML = cards.map(cardHtml).join('');
+    if (window.gcWireCards) window.gcWireCards();
   }
 
   function apply(fields, data) {
@@ -91,12 +93,21 @@
     try { renderCarousel(data.carousel); } catch (e) {}
   }
 
+  var PREVIEW = /[?&]cms=preview/.test(location.search);
+  function previewScroll() {
+    var m = location.search.match(/[?&]sec=([a-z]+)/); if (!m) return;
+    var el = document.getElementById('sec-' + m[1]); if (!el) return;
+    window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 16);
+  }
   function run() {
     Promise.all([
       fetch('/cms-fields.json').then(function (r) { return r.json(); }),
       fetch(SUPA + '/rest/v1/site_content?id=eq.1&select=data', { headers: { apikey: ANON, Authorization: 'Bearer ' + ANON } })
         .then(function (r) { return r.json(); }).then(function (rows) { return (rows && rows[0] && rows[0].data) || {}; }).catch(function () { return {}; })
-    ]).then(function (res) { apply(res[0] || [], res[1] || {}); }).catch(function () {});
+    ]).then(function (res) {
+      apply(res[0] || [], res[1] || {});
+      if (PREVIEW) { setTimeout(previewScroll, 350); setTimeout(previewScroll, 1400); }
+    }).catch(function () {});
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run); else run();
   setTimeout(run, 1500);
