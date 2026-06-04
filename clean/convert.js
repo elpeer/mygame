@@ -475,15 +475,27 @@ for (const he of Object.keys(EN)) {
   if (!devices.length) devices.push('desktop');
   CMS_FIELDS.push({ k: he, type: 'text', he, en: EN[he], section: sec[0], sectionName: sec[1], order: sec[2], devices });
 }
-[
-  ['logo.png', 'לוגו', 'footer', 'CTA, תפריט וכותרת תחתונה', 11, ['desktop', 'mobile']],
-  ['cta-ice.png', 'תמונת CTA (האישה)', 'footer', 'CTA, תפריט וכותרת תחתונה', 11, ['desktop']],
-  ['falafel-phone.png', 'טלפון פלאפל', 'nobs', 'בלי בולשיט', 8, ['desktop']],
-  ['hero-mockup.png', 'תמונת גיבור (מובייל)', 'hero', 'גיבור (Hero)', 2, ['mobile']],
-  ['gt-prizes.png', 'תמונת פרסים', 'types', 'סוגי משחקים', 6, ['desktop']],
-  ['leaderboard.png', 'טבלת דירוג', 'types', 'סוגי משחקים', 6, ['desktop']],
-].forEach(([k, label, sid, sname, order, devices]) =>
-  CMS_FIELDS.push({ k, type: 'img', label, section: sid, sectionName: sname, order, devices }));
+// Auto-discover EVERY content image on the page so each one is replaceable, grouped in
+// one image gallery section.
+const IMG_LABEL = {
+  'logo.png': 'לוגו', 'cta-ice.png': 'תמונת CTA (האישה)', 'falafel-phone.png': 'טלפון פלאפל',
+  'hero-mockup.png': 'תמונת גיבור (מובייל)', 'hero-main.png': 'תמונת גיבור', 'gt-prizes.png': 'פרסים',
+  'leaderboard.png': 'טבלת דירוג', 'gt-speed.png': 'משחקי זריזות', 'gt-twist.png': 'טוויסט אישי',
+  'gt-sport.png': 'משחקי ספורט', 'game-falafel.png': 'משחק פלאפל', 'game-basket.png': 'משחק כדורסל',
+  'game-family.jpg': 'משחק משפחה', 'game-summary.png': 'סיכום תקופה', 'step-1.png': 'שלב 1',
+  'step-2.png': 'שלב 2', 'step-3.png': 'שלב 3', 'why-deco.png': 'עיטור — למה גאונית',
+  'forwho-deco.png': 'עיטור — למי מתאים', 'cta-woman.png': 'אישה (CTA ישן)',
+  'occ-birthday.png': 'יום הולדת', 'occ-proposal.png': 'הצעת נישואים', 'occ-family.png': 'מפגש משפחתי',
+  'occ-wedding.png': 'חתונה', 'occ-mitzvah.png': 'בר/בת מצווה', 'occ-special.png': 'אירוע מיוחד',
+};
+const imgSeen = {};
+const scanImgs = (txt, dev) => {
+  const re = /src="(?:\.\.\/)?(?:img|figma-assets)\/([^"?]+\.(?:png|jpg|jpeg|webp))"/g;
+  let m; while ((m = re.exec(txt))) { (imgSeen[m[1]] = imgSeen[m[1]] || new Set()).add(dev); }
+};
+scanImgs(body, 'desktop'); scanImgs(MOBILE, 'mobile');
+Object.keys(imgSeen).sort((a, b) => (IMG_LABEL[b] ? 1 : 0) - (IMG_LABEL[a] ? 1 : 0) || a.localeCompare(b)).forEach((fn) =>
+  CMS_FIELDS.push({ k: fn, type: 'img', label: IMG_LABEL[fn] || fn, section: 'images', sectionName: '🖼️ תמונות', order: 50, devices: Array.from(imgSeen[fn]) }));
 fs.writeFileSync(path.join(__dirname, 'cms-fields.json'), JSON.stringify(CMS_FIELDS));
 
 // Bilingual carousel defaults for the CMS (titles + tags translated for English).
