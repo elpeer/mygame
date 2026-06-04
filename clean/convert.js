@@ -175,36 +175,34 @@ if (nbR) {
 body = body.replace(/src="[^"]*imgImage1441\.png"/g, 'src="img/cta-ice.png"');
 body = body.replace(/(<p\b[^>]*?)(>\s*מוכנים לשבור את הקרח)/, '$1 style="white-space:nowrap"$2');
 
-// Carousel cleanup: remove the black avatar placeholder circles, replace the broken
-// zoomed/offset image crops with a clean object-cover fit, and rebuild the nav arrows.
-let _bz = 0;
-while (_bz < 8) {
-  const r = enclosingDivRange(body, 'bg-black');
-  if (!r) break;
-  body = body.slice(0, r[0]) + body.slice(r[1]);
-  _bz++;
-}
-body = body.replace(
-  /(<div class="aspect-\[277\/277\][^]*?<img alt="" class=")absolute h-\[[^\]]+\] left-\[[^\]]+\] max-w-none top-\[[^\]]+\] w-\[[^\]]+\]("[^>]*\/>)/g,
-  '$1absolute inset-0 w-full h-full object-cover$2');
-// rebuild the two carousel nav arrow buttons (broken chevron transforms)
-(function () {
-  const hi = body.indexOf('ששוברים את השגרה');
-  if (hi < 0) return;
-  const jb = body.lastIndexOf('justify-between', hi);
-  if (jb < 0) return;
-  const rowDiv = body.lastIndexOf('<div', jb);
-  const gt = body.indexOf('>', rowDiv) + 1;
-  const navStart = body.indexOf('<div', gt);
-  if (navStart < 0 || navStart > hi) return;
-  const re = /<div\b|<\/div>/g; re.lastIndex = navStart;
-  let depth = 0, m, navEnd = -1;
-  while ((m = re.exec(body))) { if (m[0] === '</div>') { depth--; if (depth === 0) { navEnd = re.lastIndex; break; } } else depth++; }
-  if (navEnd < 0) return;
-  const chev = (pts) => `<button class="bg-white rounded-full size-[56px] flex items-center justify-center" style="box-shadow:0 4px 14px rgba(0,0,0,.1)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1e2330" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="${pts}"/></svg></button>`;
-  const NAV = `<div class="flex gap-[12px] items-center shrink-0">${chev('15 18 9 12 15 6')}${chev('9 18 15 12 9 6')}</div>`;
-  body = body.slice(0, navStart) + NAV + body.slice(navEnd);
-})();
+// Rebuild the games carousel: distinct cards, working horizontal scroll + arrows, and a
+// deck the CMS loader can re-render. Replaces the broken Figma version (all cards shared
+// one zoomed image and the chevrons were mis-rendered).
+const GC_CARDS = [
+  { he: 'מכינים פלאפל', tags: ['הומור', 'זריזות'], img: 'game-falafel.png' },
+  { he: 'מלך הסלים', tags: ['ספורט', 'תחרות'], img: 'game-basket.png' },
+  { he: 'מנתחים מידע רפואי עם דניאל', tags: ['חשיבה', 'הומור'], img: 'game-family.jpg' },
+  { he: 'מסכמים תקופה', tags: ['הומור', 'יצירה'], img: 'game-summary.png' },
+  { he: 'טניס זוגות', tags: ['ספורט', 'תחרות'], img: 'game-basket.png' },
+  { he: 'אורזים ניירת עם טלי', tags: ['זריזות', 'הומור'], img: 'game-summary.png' },
+];
+const gcCard = (c) => `<div class="bg-white rounded-[40px] p-[26px] shrink-0 w-[340px] flex flex-col gap-[16px]" style="scroll-snap-align:start">
+        <h3 class="text-[26px] font-extrabold text-[#1e2330] leading-[1.12]">${c.he}</h3>
+        <div class="flex gap-[10px]">${c.tags.map(t => `<span class="bg-[#f3f0e9] rounded-full px-[15px] py-[6px] text-[15px] font-medium text-[#1e2330]">${t}</span>`).join('')}</div>
+        <div class="w-full aspect-square rounded-[26px] overflow-hidden"><img src="img/${c.img}" alt="${c.he}" class="w-full h-full object-cover" /></div>
+      </div>`;
+const gcChev = (dir, pts) => `<button type="button" data-gc="${dir}" class="bg-white rounded-full size-[56px] flex items-center justify-center shrink-0" style="box-shadow:0 4px 14px rgba(0,0,0,.1)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1e2330" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="${pts}"/></svg></button>`;
+const GAMES_CAROUSEL = `<div dir="rtl" class="bg-[#f3f0e9] w-full flex flex-col items-center py-[80px] px-[60px]">
+      <div class="w-full max-w-[1500px] flex items-center justify-between mb-[40px] gap-[24px]">
+        <div class="flex gap-[12px] shrink-0">${gcChev('prev', '15 18 9 12 15 6')}${gcChev('next', '9 18 15 12 9 6')}</div>
+        <h2 class="text-[52px] font-extrabold text-[#1e2330] text-right leading-[1.05]">משחקים קלילים ששוברים את השגרה</h2>
+      </div>
+      <div id="gcDeck" class="w-full max-w-[1500px] flex gap-[28px] overflow-x-auto pb-[18px]" style="scroll-snap-type:x mandatory;scrollbar-width:none;-ms-overflow-style:none">
+        ${GC_CARDS.map(gcCard).join('')}
+      </div>
+    </div>`;
+const gcR = sectionRange(body, 'ששוברים את השגרה');
+if (gcR) body = body.slice(0, gcR[0]) + GAMES_CAROUSEL + body.slice(gcR[1]);
 
 // Hero badge: keep "מקום הראשון" on a single line.
 body = body.replace(/<span class="leading-\[normal\]">(\s*<br[^>]*\/>\s*מקום הראשון)/, '<span class="leading-[normal]" style="white-space:nowrap;display:inline-block">$1');
@@ -360,6 +358,7 @@ function buildPage(lang, frameBody, mobileBody, header) {
   #topnav .nav-cta{background:#111317;color:#fff;font-weight:700;font-size:15px;border-radius:999px;padding:12px 22px;text-decoration:none;white-space:nowrap}
   #topnav .nav-cta:hover{background:#2665d6}
   @media (max-width:767px){#topnav{display:none}}
+  #gcDeck::-webkit-scrollbar{display:none}
 </style>
 </head>
 <body>
@@ -391,6 +390,16 @@ ${mobileBody}
     });
   }
   setTimeout(initFaq,400); setTimeout(initFaq,1400);
+  // Games carousel arrows
+  (function(){
+    function wire(){var d=document.getElementById('gcDeck');if(!d)return;
+      var rtl=(document.documentElement.getAttribute('dir')!=='ltr');
+      document.querySelectorAll('[data-gc]').forEach(function(b){
+        b.onclick=function(){var nx=b.getAttribute('data-gc')==='next';var amt=380*(nx?1:-1)*(rtl?-1:1);d.scrollBy({left:amt,behavior:'smooth'});};
+      });}
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire);else wire();
+    setTimeout(wire,1500);
+  })();
 </script>
 <script>
   function fit(){var f=document.getElementById('frame'),st=document.getElementById('stage');
@@ -430,16 +439,56 @@ ${mobileBody}
 }
 
 // ---- CMS field manifest (consumed by /cms.js and /admin) ----
-// Every translatable string becomes an editable text field (HE + EN). Plus key images.
+// Group every editable string by page section (parsed from translations.js comments) and
+// tag it desktop/mobile (by where the string actually appears).
+const TRANS_SRC = fs.readFileSync(path.join(__dirname, 'translations.js'), 'utf8');
+const SECMAP = [
+  ['chips / hero', 'hero', 'גיבור (Hero)', 2],
+  ['how it works', 'how', 'איך זה עובד', 3],
+  ['why genius', 'why', 'למה זו מתנה גאונית', 4],
+  ['who is it for', 'who', 'למי זה מתאים', 5],
+  ['game types', 'types', 'סוגי משחקים', 6],
+  ['carousel', 'carousel', 'קרוסלת משחקים', 7],
+  ['no bullshit', 'nobs', 'בלי בולשיט', 8],
+  ['faq (desktop)', 'faq', 'שאלות נפוצות', 9],
+  ['faq (mobile)', 'faqm', 'שאלות נפוצות (מובייל)', 10],
+  ['final cta', 'footer', 'CTA, תפריט וכותרת תחתונה', 11],
+];
+const SECTION_OF = {};
+{
+  let cur = ['other', 'כללי', 99];
+  for (const line of TRANS_SRC.split('\n')) {
+    const cm = line.match(/^\s*\/\/\s*(.+?)\s*$/);
+    if (cm) { const f = SECMAP.find(s => cm[1].toLowerCase().startsWith(s[0])); if (f) cur = [f[1], f[2], f[3]]; continue; }
+    const em = line.match(/^\s*"((?:[^"\\]|\\.)*)"\s*:/);
+    if (em) { try { SECTION_OF[JSON.parse('"' + em[1] + '"')] = cur; } catch (e) {} }
+  }
+}
 const CMS_FIELDS = [];
 for (const he of Object.keys(EN)) {
   if (!he.trim()) continue;
-  CMS_FIELDS.push({ k: he, type: 'text', he: he, en: EN[he], section: 'טקסטים' });
+  const sec = SECTION_OF[he] || ['other', 'כללי', 99];
+  if (sec[0] === 'carousel') continue; // carousel handled by its own card editor
+  const devices = [];
+  if (body.indexOf(he) >= 0) devices.push('desktop');
+  if (MOBILE.indexOf(he) >= 0) devices.push('mobile');
+  if (!devices.length) devices.push('desktop');
+  CMS_FIELDS.push({ k: he, type: 'text', he, en: EN[he], section: sec[0], sectionName: sec[1], order: sec[2], devices });
 }
-[['logo.png', 'לוגו'], ['cta-ice.png', 'תמונת CTA (האישה)'], ['falafel-phone.png', 'טלפון פלאפל'],
- ['hero-mockup.png', 'תמונת גיבור (מובייל)'], ['gt-prizes.png', 'תמונת פרסים'], ['leaderboard.png', 'טבלת דירוג']
-].forEach(([k, label]) => CMS_FIELDS.push({ k, type: 'img', label, section: 'תמונות' }));
+[
+  ['logo.png', 'לוגו', 'footer', 'CTA, תפריט וכותרת תחתונה', 11, ['desktop', 'mobile']],
+  ['cta-ice.png', 'תמונת CTA (האישה)', 'footer', 'CTA, תפריט וכותרת תחתונה', 11, ['desktop']],
+  ['falafel-phone.png', 'טלפון פלאפל', 'nobs', 'בלי בולשיט', 8, ['desktop']],
+  ['hero-mockup.png', 'תמונת גיבור (מובייל)', 'hero', 'גיבור (Hero)', 2, ['mobile']],
+  ['gt-prizes.png', 'תמונת פרסים', 'types', 'סוגי משחקים', 6, ['desktop']],
+  ['leaderboard.png', 'טבלת דירוג', 'types', 'סוגי משחקים', 6, ['desktop']],
+].forEach(([k, label, sid, sname, order, devices]) =>
+  CMS_FIELDS.push({ k, type: 'img', label, section: sid, sectionName: sname, order, devices }));
 fs.writeFileSync(path.join(__dirname, 'cms-fields.json'), JSON.stringify(CMS_FIELDS));
+
+// Bilingual carousel defaults for the CMS (titles + tags translated for English).
+const GC_FULL = GC_CARDS.map(c => ({ he: c.he, en: translate(c.he), img: c.img, tags: c.tags.slice(), tagsEn: c.tags.map(translate) }));
+fs.writeFileSync(path.join(__dirname, 'cms-carousel.json'), JSON.stringify(GC_FULL));
 
 // Hebrew (default) + English (LTR)
 const heHtml = buildPage('he', body, MOBILE.replace('<!--LANGSWITCH-->', mobileLang('he')), siteHeader('he'));

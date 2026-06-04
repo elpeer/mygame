@@ -9,19 +9,21 @@
 <style>
   *{font-family:'Rubik',system-ui,sans-serif}
   body{background:#f4f5f7}
-  .lbl{font-size:12px;font-weight:600;color:#8a8f98}
-  input,textarea{transition:border-color .15s}
+  .lbl{font-size:11px;font-weight:600;color:#9aa0a8;letter-spacing:.02em}
+  input,textarea{transition:border-color .15s,box-shadow .15s}
   input:focus,textarea:focus{outline:none;border-color:#2665d6;box-shadow:0 0 0 3px rgba(38,101,214,.12)}
+  .seg{background:#eef0f3;border-radius:999px;padding:3px;display:inline-flex}
+  .seg button{border-radius:999px;padding:6px 16px;font-size:13px;font-weight:700;color:#6b7280}
+  .seg button.on{background:#fff;color:#1e2330;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .navlink{display:block;padding:7px 12px;border-radius:10px;font-size:14px;color:#41464e;cursor:pointer}
+  .navlink:hover{background:#eef0f3}
 </style>
 </head>
 <body class="text-[#1e2330]">
 <!-- LOGIN -->
 <div id="login" class="min-h-screen flex items-center justify-center p-4">
   <div class="w-full max-w-[380px] bg-white rounded-3xl shadow-xl p-8">
-    <div class="text-center mb-6">
-      <div class="text-3xl font-extrabold tracking-tight">mygame</div>
-      <div class="text-[#8a8f98] mt-1">מערכת ניהול תוכן</div>
-    </div>
+    <div class="text-center mb-6"><div class="text-3xl font-extrabold tracking-tight">mygame</div><div class="text-[#8a8f98] mt-1">מערכת ניהול תוכן</div></div>
     <label class="lbl">שם משתמש</label>
     <input id="u" class="w-full border border-[#e2e4e9] rounded-xl px-4 py-3 mt-1 mb-4" autocomplete="username" />
     <label class="lbl">סיסמה</label>
@@ -34,41 +36,44 @@
 <!-- APP -->
 <div id="app" class="hidden">
   <header class="sticky top-0 z-20 bg-white border-b border-[#eceef1]">
-    <div class="max-w-[1100px] mx-auto px-5 h-16 flex items-center justify-between gap-4">
+    <div class="max-w-[1200px] mx-auto px-5 h-16 flex items-center justify-between gap-3">
       <div class="flex items-center gap-3">
         <span class="text-xl font-extrabold">mygame</span>
-        <span class="text-[#8a8f98] text-sm hidden sm:inline">ניהול תוכן</span>
+        <div class="seg" id="devSeg"><button data-dev="desktop" class="on">🖥️ דסקטופ</button><button data-dev="mobile">📱 מובייל</button></div>
       </div>
       <div class="flex items-center gap-2">
-        <input id="search" placeholder="חיפוש…" class="border border-[#e2e4e9] rounded-full px-4 py-2 text-sm w-[160px] sm:w-[220px]" />
+        <input id="search" placeholder="חיפוש…" class="border border-[#e2e4e9] rounded-full px-4 py-2 text-sm w-[140px] sm:w-[200px]" />
+        <a href="/" target="_blank" class="text-sm font-semibold text-[#2665d6] px-3 py-2 rounded-full hover:bg-[#e7effd] transition">מעבר לאתר ↗</a>
         <button id="saveBtn" class="bg-[#2665d6] text-white font-bold rounded-full px-5 py-2 text-sm hover:bg-[#1b51b0] transition disabled:opacity-50">שמירה ופרסום</button>
         <button id="logout" class="text-[#8a8f98] text-sm px-2 hover:text-[#1e2330]">יציאה</button>
       </div>
-    </div>
-    <div class="max-w-[1100px] mx-auto px-5 flex gap-1 -mb-px">
-      <button class="tabBtn px-4 py-2 text-sm font-semibold border-b-2 border-[#2665d6] text-[#2665d6]" data-tab="text">טקסטים</button>
-      <button class="tabBtn px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-[#8a8f98]" data-tab="img">תמונות</button>
     </div>
   </header>
 
   <div id="savedNote" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 bg-[#16a34a] text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-lg z-30">נשמר ופורסם ✓</div>
 
-  <main class="max-w-[1100px] mx-auto px-5 py-6">
-    <p class="text-[#8a8f98] text-sm mb-4">עריכת התוכן בעברית ובאנגלית. שינויים נשמרים ל‑Supabase ומתפרסמים מיד לאתר החי.</p>
-    <div id="list" class="grid gap-3"></div>
-  </main>
+  <div class="max-w-[1200px] mx-auto px-5 py-6 flex gap-6">
+    <aside class="w-[210px] shrink-0 hidden md:block">
+      <div class="sticky top-[88px]"><div class="lbl mb-2 px-2">סקשנים</div><nav id="sidebar" class="space-y-0.5"></nav></div>
+    </aside>
+    <main class="flex-1 min-w-0">
+      <p class="text-[#8a8f98] text-sm mb-4">עורכים תוכן בעברית ובאנגלית, לפי סקשן. בחרו <b>דסקטופ</b> או <b>מובייל</b> למעלה. שינויים נשמרים ומתפרסמים מיד.</p>
+      <div id="sections" class="space-y-8"></div>
+    </main>
+  </div>
 </div>
 
 <script>
 var SUPA='https://xvlobuotrihngqvuwyka.supabase.co';
 var ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh2bG9idW90cmlobmdxdnV3eWthIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1OTk5ODAsImV4cCI6MjA4NTE3NTk4MH0.i9VSgaEjzJDm9D64TqN7AY7kbBIL9F8bahs-dDp9B-g';
 var H={apikey:ANON,Authorization:'Bearer '+ANON,'Content-Type':'application/json'};
-var CREDS=null, FIELDS=[], OV={}, TAB='text';
-
-function rpc(fn,body){return fetch(SUPA+'/rest/v1/rpc/'+fn,{method:'POST',headers:H,body:JSON.stringify(body)}).then(function(r){return r.json();});}
+var CREDS=null, FIELDS=[], DEF_CARDS=[], OV={desktop:{},mobile:{},carousel:null}, CARDS=[], DEV='desktop';
+function rpc(fn,b){return fetch(SUPA+'/rest/v1/rpc/'+fn,{method:'POST',headers:H,body:JSON.stringify(b)}).then(function(r){return r.json();});}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function clone(o){return JSON.parse(JSON.stringify(o));}
 
 function doLogin(){
-  var u=document.getElementById('u').value.trim(), p=document.getElementById('p').value;
+  var u=document.getElementById('u').value.trim(),p=document.getElementById('p').value;
   document.getElementById('loginErr').textContent='';
   rpc('cms_login',{p_user:u,p_pass:p}).then(function(ok){
     if(ok===true){CREDS={u:u,p:p};sessionStorage.setItem('cms',JSON.stringify(CREDS));start();}
@@ -83,80 +88,134 @@ function start(){
   document.getElementById('app').classList.remove('hidden');
   Promise.all([
     fetch('/cms-fields.json').then(function(r){return r.json();}),
+    fetch('/cms-carousel.json').then(function(r){return r.json();}),
     fetch(SUPA+'/rest/v1/site_content?id=eq.1&select=data',{headers:H}).then(function(r){return r.json();})
   ]).then(function(res){
-    FIELDS=res[0]; OV=(res[1]&&res[1][0]&&res[1][0].data)||{}; render();
+    FIELDS=res[0]; DEF_CARDS=res[1]||[];
+    var d=(res[2]&&res[2][0]&&res[2][0].data)||{};
+    OV={desktop:d.desktop||{},mobile:d.mobile||{},carousel:d.carousel||null};
+    CARDS=(OV.carousel&&OV.carousel.length)?clone(OV.carousel):clone(DEF_CARDS);
+    render();
   });
 }
+
+function defOf(f,l){return (l==='he'?f.he:f.en)||'';}
+function curVal(f,l){var b=OV[DEV][f.k];return (b&&b[l]!=null)?b[l]:defOf(f,l);}
+function curUrl(f){var b=OV[DEV][f.k];return (b&&b.url)||'';}
+function setVal(f,l,v){var b=OV[DEV][f.k]=OV[DEV][f.k]||{};b[l]=v;}
+
+function sectionsForDevice(){
+  var seen={},out=[];
+  FIELDS.forEach(function(f){ if(f.devices.indexOf(DEV)<0)return; if(seen[f.section])return; seen[f.section]=1; out.push({id:f.section,name:f.sectionName,order:f.order}); });
+  if(DEV==='desktop') out.push({id:'carousel',name:'קרוסלת משחקים',order:7});
+  out.sort(function(a,b){return a.order-b.order;});
+  return out;
+}
+
 function render(){
   var q=(document.getElementById('search').value||'').toLowerCase();
-  var list=document.getElementById('list'); list.innerHTML='';
-  FIELDS.filter(function(f){return f.type===TAB;}).forEach(function(f){
-    var rec=OV[f.k]||{};
-    var hay=((f.he||'')+(f.en||'')+(f.label||'')+(f.k||'')).toLowerCase();
-    if(q && hay.indexOf(q)<0) return;
-    var card=document.createElement('div');
-    card.className='bg-white rounded-2xl border border-[#eceef1] p-4';
-    if(f.type==='text'){
-      card.innerHTML=
-        '<div class="grid sm:grid-cols-2 gap-3">'
-        +'<div><div class="lbl mb-1">עברית</div><textarea data-k="'+esc(f.k)+'" data-l="he" dir="rtl" rows="2" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm resize-y"></textarea></div>'
-        +'<div><div class="lbl mb-1">English</div><textarea data-k="'+esc(f.k)+'" data-l="en" dir="ltr" rows="2" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm resize-y"></textarea></div>'
-        +'</div>';
-      list.appendChild(card);
-      var tas=card.querySelectorAll('textarea');
-      tas[0].value=(rec.he!=null?rec.he:f.he)||'';
-      tas[1].value=(rec.en!=null?rec.en:f.en)||'';
-    } else if(f.type==='img'){
-      card.innerHTML=
-        '<div class="flex items-center gap-4">'
-        +'<img src="" class="prev w-16 h-16 object-contain rounded-lg bg-[#f4f5f7] border border-[#eceef1]" />'
-        +'<div class="flex-1">'
-        +'<div class="font-semibold text-sm mb-0.5">'+esc(f.label||f.k)+'</div>'
-        +'<div class="lbl mb-1">קובץ נוכחי: '+esc(f.k)+'</div>'
-        +'<input data-k="'+esc(f.k)+'" data-l="url" dir="ltr" placeholder="הדביקו כתובת תמונה (URL)…" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm" />'
-        +'</div></div>';
-      list.appendChild(card);
-      var inp=card.querySelector('input'), prev=card.querySelector('.prev');
-      inp.value=rec.url||'';
-      prev.src=rec.url||('/img/'+f.k);
-      inp.addEventListener('input',function(){prev.src=inp.value||('/img/'+f.k);});
-    }
+  var secs=sectionsForDevice();
+  var sb=document.getElementById('sidebar'); sb.innerHTML='';
+  secs.forEach(function(s){var a=document.createElement('a');a.className='navlink';a.textContent=s.name;a.onclick=function(){var el=document.getElementById('sec_'+s.id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});};sb.appendChild(a);});
+  var root=document.getElementById('sections'); root.innerHTML='';
+  secs.forEach(function(s){
+    var wrap=document.createElement('section'); wrap.id='sec_'+s.id;
+    var head='<h2 class="text-lg font-extrabold mb-3">'+esc(s.name)+'</h2>';
+    if(s.id==='carousel'){ wrap.innerHTML=head; wrap.appendChild(carouselEditor()); root.appendChild(wrap); return; }
+    var fields=FIELDS.filter(function(f){return f.section===s.id&&f.devices.indexOf(DEV)>=0;})
+      .filter(function(f){ if(!q)return true; return ((f.he||'')+(f.en||'')+(f.label||'')).toLowerCase().indexOf(q)>=0;});
+    if(!fields.length) return;
+    var html='<div class="grid gap-3">';
+    fields.forEach(function(f){
+      if(f.type==='text'){
+        html+='<div class="bg-white rounded-2xl border border-[#eceef1] p-4 grid sm:grid-cols-2 gap-3">'
+          +'<div><div class="lbl mb-1">עברית</div><textarea data-k="'+esc(f.k)+'" data-l="he" dir="rtl" rows="2" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm resize-y">'+esc(curVal(f,'he'))+'</textarea></div>'
+          +'<div><div class="lbl mb-1">English</div><textarea data-k="'+esc(f.k)+'" data-l="en" dir="ltr" rows="2" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm resize-y">'+esc(curVal(f,'en'))+'</textarea></div>'
+          +'</div>';
+      } else {
+        html+='<div class="bg-white rounded-2xl border border-[#eceef1] p-4 flex items-center gap-4">'
+          +'<img src="'+(curUrl(f)||('/img/'+f.k))+'" class="prev w-16 h-16 object-contain rounded-lg bg-[#f4f5f7] border border-[#eceef1]"/>'
+          +'<div class="flex-1"><div class="font-semibold text-sm mb-0.5">'+esc(f.label||f.k)+'</div>'
+          +'<div class="lbl mb-1">קובץ נוכחי: '+esc(f.k)+'</div>'
+          +'<input data-k="'+esc(f.k)+'" data-img="1" dir="ltr" value="'+esc(curUrl(f))+'" placeholder="הדביקו כתובת תמונה (URL)…" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div></div>';
+      }
+    });
+    html+='</div>';
+    wrap.innerHTML=head+html;
+    root.appendChild(wrap);
+  });
+  root.querySelectorAll('textarea[data-k]').forEach(function(t){
+    t.addEventListener('input',function(){var f=FIELDS.find(function(x){return x.k===t.getAttribute('data-k');});setVal(f,t.getAttribute('data-l'),t.value);});
+  });
+  root.querySelectorAll('input[data-img]').forEach(function(inp){
+    inp.addEventListener('input',function(){var f=FIELDS.find(function(x){return x.k===inp.getAttribute('data-k');});var b=OV[DEV][f.k]=OV[DEV][f.k]||{};if(inp.value.trim())b.url=inp.value.trim();else delete b.url;var pv=inp.parentElement.parentElement.querySelector('.prev');if(pv)pv.src=inp.value.trim()||('/img/'+f.k);});
   });
 }
-function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 
-function collect(){
-  // start from existing overrides, update from inputs, drop values equal to defaults
-  var data=JSON.parse(JSON.stringify(OV));
-  document.querySelectorAll('#list [data-k]').forEach(function(el){
-    var k=el.getAttribute('data-k'), l=el.getAttribute('data-l'), v=el.value;
-    var f=FIELDS.find(function(x){return x.k===k;}); if(!f)return;
-    data[k]=data[k]||{};
-    if(l==='url'){ if(v.trim())data[k].url=v.trim(); else delete data[k].url; }
-    else { var def=(l==='he'?f.he:f.en)||''; if(v!==def) data[k][l]=v; else delete data[k][l]; }
-    if(Object.keys(data[k]).length===0) delete data[k];
+function carouselEditor(){
+  var box=document.createElement('div');
+  function draw(){
+    box.innerHTML='';
+    CARDS.forEach(function(c,i){
+      var d=document.createElement('div'); d.className='bg-white rounded-2xl border border-[#eceef1] p-4 mb-3';
+      d.innerHTML=
+        '<div class="flex items-start gap-4">'
+        +'<img src="'+esc((c.img&&/^https?:|^\//.test(c.img))?c.img:('/img/'+(c.img||'')))+'" class="cpv w-16 h-16 object-cover rounded-lg bg-[#f4f5f7] border border-[#eceef1]"/>'
+        +'<div class="flex-1 grid sm:grid-cols-2 gap-2">'
+        +'<div><div class="lbl mb-1">כותרת (עברית)</div><input data-i="'+i+'" data-f="he" dir="rtl" value="'+esc(c.he||'')+'" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div>'
+        +'<div><div class="lbl mb-1">Title (English)</div><input data-i="'+i+'" data-f="en" dir="ltr" value="'+esc(c.en||'')+'" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div>'
+        +'<div><div class="lbl mb-1">תגיות עברית (פסיק)</div><input data-i="'+i+'" data-f="tags" dir="rtl" value="'+esc((c.tags||[]).join(', '))+'" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div>'
+        +'<div><div class="lbl mb-1">Tags English (comma)</div><input data-i="'+i+'" data-f="tagsEn" dir="ltr" value="'+esc((c.tagsEn||[]).join(', '))+'" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div>'
+        +'<div class="sm:col-span-2"><div class="lbl mb-1">תמונה (שם קובץ או URL)</div><input data-i="'+i+'" data-f="img" dir="ltr" value="'+esc(c.img||'')+'" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div>'
+        +'</div>'
+        +'<button data-rm="'+i+'" class="text-red-500 text-sm font-semibold shrink-0 hover:underline">מחיקה</button>'
+        +'</div>';
+      box.appendChild(d);
+    });
+    var add=document.createElement('button'); add.className='bg-[#eef0f3] text-[#1e2330] font-semibold rounded-xl px-4 py-2 text-sm hover:bg-[#e2e4e9]';
+    add.textContent='+ הוסף כרטיסיה'; add.onclick=function(){CARDS.push({he:'',en:'',tags:[],tagsEn:[],img:''});draw();}; box.appendChild(add);
+    box.querySelectorAll('input[data-i]').forEach(function(inp){
+      inp.addEventListener('input',function(){
+        var i=+inp.getAttribute('data-i'),f=inp.getAttribute('data-f'),v=inp.value;
+        if(f==='tags'||f==='tagsEn')CARDS[i][f]=v.split(',').map(function(s){return s.trim();}).filter(Boolean);
+        else CARDS[i][f]=v;
+        if(f==='img'){var pv=inp.closest('.bg-white').querySelector('.cpv');if(pv)pv.src=(v&&/^https?:|^\//.test(v))?v:('/img/'+v);}
+      });
+    });
+    box.querySelectorAll('button[data-rm]').forEach(function(b){b.onclick=function(){CARDS.splice(+b.getAttribute('data-rm'),1);draw();};});
+  }
+  draw();
+  return box;
+}
+
+function clean(bucket){
+  var out={};
+  Object.keys(bucket).forEach(function(k){
+    var rec=bucket[k]; var f=FIELDS.find(function(x){return x.k===k;}); if(!f)return; var o={};
+    if(rec.he!=null&&rec.he!==(f.he||''))o.he=rec.he;
+    if(rec.en!=null&&rec.en!==(f.en||''))o.en=rec.en;
+    if(rec.url)o.url=rec.url;
+    if(Object.keys(o).length)out[k]=o;
   });
-  return data;
+  return out;
 }
 document.getElementById('saveBtn').onclick=function(){
-  var btn=this; btn.disabled=true; var data=collect();
+  var btn=this; btn.disabled=true;
+  var data={desktop:clean(OV.desktop),mobile:clean(OV.mobile)};
+  if(JSON.stringify(CARDS)!==JSON.stringify(DEF_CARDS)) data.carousel=CARDS;
   rpc('cms_save',{p_user:CREDS.u,p_pass:CREDS.p,p_data:data}).then(function(ok){
     btn.disabled=false;
-    if(ok===true){OV=data;var n=document.getElementById('savedNote');n.classList.remove('hidden');setTimeout(function(){n.classList.add('hidden');},2200);}
+    if(ok===true){OV.desktop=data.desktop;OV.mobile=data.mobile;OV.carousel=data.carousel||null;var n=document.getElementById('savedNote');n.classList.remove('hidden');setTimeout(function(){n.classList.add('hidden');},2200);}
     else alert('שמירה נכשלה — התחברו מחדש');
   }).catch(function(){btn.disabled=false;alert('שגיאת חיבור בשמירה');});
 };
 document.getElementById('search').addEventListener('input',render);
 document.getElementById('logout').onclick=function(){sessionStorage.removeItem('cms');location.reload();};
-document.querySelectorAll('.tabBtn').forEach(function(b){b.onclick=function(){
-  TAB=b.getAttribute('data-tab');
-  document.querySelectorAll('.tabBtn').forEach(function(x){x.className='tabBtn px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-[#8a8f98]';});
-  b.className='tabBtn px-4 py-2 text-sm font-semibold border-b-2 border-[#2665d6] text-[#2665d6]';
+document.querySelectorAll('#devSeg button').forEach(function(b){b.onclick=function(){
+  DEV=b.getAttribute('data-dev');
+  document.querySelectorAll('#devSeg button').forEach(function(x){x.classList.toggle('on',x===b);});
   render();
 };});
-
-// auto-login from session
 (function(){var s=sessionStorage.getItem('cms');if(s){try{CREDS=JSON.parse(s);start();}catch(e){}}})();
 </script>
 </body>
