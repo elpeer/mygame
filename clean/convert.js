@@ -496,6 +496,24 @@ const scanImgs = (txt, dev) => {
 scanImgs(body, 'desktop'); scanImgs(MOBILE, 'mobile');
 Object.keys(imgSeen).sort((a, b) => (IMG_LABEL[b] ? 1 : 0) - (IMG_LABEL[a] ? 1 : 0) || a.localeCompare(b)).forEach((fn) =>
   CMS_FIELDS.push({ k: fn, type: 'img', label: IMG_LABEL[fn] || fn, section: 'images', sectionName: '🖼️ תמונות', order: 50, devices: Array.from(imgSeen[fn]) }));
+
+// Link targets for every button / footer link (the CMS sets their href).
+const LINK_FIELDS = [
+  ['בונים משחק אישי עכשיו', 'כפתור ראשי (Hero)'],
+  ['בנו משחק עכשיו', 'כפתור: בנו משחק עכשיו'],
+  ['בואו נבנה את המשחק שלכם', 'כפתור: בואו נבנה את המשחק'],
+  ['דברו איתנו', 'כפתור: דברו איתנו'],
+  ['תנאי שימוש', 'קישור: תנאי שימוש'],
+  ['מדיניות פרטיות', 'קישור: מדיניות פרטיות'],
+  ['הצהרת נגישות', 'קישור: הצהרת נגישות'],
+  ['כל המשחקים', 'קישור: כל המשחקים'],
+  ['שאלות ותשובות', 'קישור: שאלות ותשובות'],
+  ['איך זה עובד', 'קישור: איך זה עובד'],
+];
+LINK_FIELDS.forEach(([he, label]) => {
+  if (!EN[he]) return;
+  CMS_FIELDS.push({ k: he, type: 'link', he, en: EN[he], label, section: 'links', sectionName: '🔗 קישורים', order: 55, devices: ['desktop', 'mobile'] });
+});
 fs.writeFileSync(path.join(__dirname, 'cms-fields.json'), JSON.stringify(CMS_FIELDS));
 
 // Bilingual carousel defaults for the CMS (titles + tags translated for English).

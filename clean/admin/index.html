@@ -112,10 +112,26 @@ function sectionsForDevice(){
   return out;
 }
 
+function uploadImage(file, cb){
+  var name=Date.now()+'_'+(file.name||'image').replace(/[^a-zA-Z0-9._-]/g,'_');
+  fetch(SUPA+'/storage/v1/object/site-images/'+encodeURIComponent(name),{
+    method:'POST',headers:{apikey:ANON,Authorization:'Bearer '+ANON,'Content-Type':file.type||'application/octet-stream','x-upsert':'true'},body:file
+  }).then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(t);});return r.json();})
+   .then(function(){cb(null,SUPA+'/storage/v1/object/public/site-images/'+encodeURIComponent(name));})
+   .catch(function(e){cb(e);});
+}
+function fieldCard(f){ return f.type==='link'?linkCard(f):textCard(f); }
 function textCard(f){
   return '<div class="rounded-xl border border-[#eceef1] p-3 grid sm:grid-cols-2 gap-3">'
     +'<div><div class="lbl mb-1">עברית</div><textarea data-k="'+esc(f.k)+'" data-l="he" dir="rtl" rows="2" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm resize-y">'+esc(curVal(f,'he'))+'</textarea></div>'
     +'<div><div class="lbl mb-1">English</div><textarea data-k="'+esc(f.k)+'" data-l="en" dir="ltr" rows="2" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm resize-y">'+esc(curVal(f,'en'))+'</textarea></div>'
+    +'</div>';
+}
+function curHref(f){var b=OV[DEV][f.k];return (b&&b.href)||'';}
+function linkCard(f){
+  return '<div class="rounded-xl border border-[#eceef1] p-3">'
+    +'<div class="font-semibold text-sm mb-1">'+esc(f.label||f.k)+' <span class="text-[#9aa0a8] font-normal">("'+esc(f.he)+'")</span></div>'
+    +'<input data-k="'+esc(f.k)+'" data-link="1" dir="ltr" value="'+esc(curHref(f))+'" placeholder="https://… או #section" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/>'
     +'</div>';
 }
 function imageGrid(fields){
@@ -124,7 +140,8 @@ function imageGrid(fields){
     var d=document.createElement('div'); d.className='rounded-xl border border-[#eceef1] p-3 flex flex-col gap-2';
     d.innerHTML='<div class="aspect-video bg-[#f4f5f7] rounded-lg overflow-hidden flex items-center justify-center"><img src="'+(curUrl(f)||('/img/'+f.k))+'" class="prev max-w-full max-h-full object-contain"/></div>'
       +'<div class="font-semibold text-sm truncate" title="'+esc(f.k)+'">'+esc(f.label||f.k)+'</div>'
-      +'<input data-k="'+esc(f.k)+'" data-img="1" dir="ltr" value="'+esc(curUrl(f))+'" placeholder="כתובת תמונה (URL)…" class="w-full border border-[#e2e4e9] rounded-lg px-2.5 py-1.5 text-xs"/>';
+      +'<label class="text-xs font-bold text-[#2665d6] cursor-pointer hover:underline">⬆ העלאה מהמכשיר<input type="file" accept="image/*" data-up="'+esc(f.k)+'" class="hidden"/></label>'
+      +'<input data-k="'+esc(f.k)+'" data-img="1" dir="ltr" value="'+esc(curUrl(f))+'" placeholder="או כתובת URL…" class="w-full border border-[#e2e4e9] rounded-lg px-2.5 py-1.5 text-xs"/>';
     box.appendChild(d);
   });
   return box;
@@ -135,6 +152,23 @@ function bindInputs(scope){
   });
   scope.querySelectorAll('input[data-img]').forEach(function(inp){
     inp.addEventListener('input',function(){var f=FIELDS.find(function(x){return x.k===inp.getAttribute('data-k');});var b=OV[DEV][f.k]=OV[DEV][f.k]||{};if(inp.value.trim())b.url=inp.value.trim();else delete b.url;var pv=inp.closest('div').querySelector('.prev');if(pv)pv.src=inp.value.trim()||('/img/'+f.k);});
+  });
+  scope.querySelectorAll('input[data-link]').forEach(function(inp){
+    inp.addEventListener('input',function(){var f=FIELDS.find(function(x){return x.k===inp.getAttribute('data-k');});var b=OV[DEV][f.k]=OV[DEV][f.k]||{};if(inp.value.trim())b.href=inp.value.trim();else delete b.href;});
+  });
+  scope.querySelectorAll('input[data-up]').forEach(function(up){
+    up.addEventListener('change',function(){
+      var file=up.files&&up.files[0]; if(!file)return;
+      var k=up.getAttribute('data-up'),lab=up.parentElement,old=lab.firstChild.textContent; lab.firstChild.textContent='מעלה…';
+      uploadImage(file,function(err,url){
+        lab.firstChild.textContent=old;
+        if(err){alert('העלאה נכשלה: '+err.message);return;}
+        var b=OV[DEV][k]=OV[DEV][k]||{};b.url=url;
+        var cell=up.closest('.rounded-xl')||up.closest('div');
+        var pv=cell.querySelector('.prev'); if(pv)pv.src=url;
+        var urlInp=cell.querySelector('input[data-img]'); if(urlInp)urlInp.value=url;
+      });
+    });
   });
 }
 function render(){
@@ -156,7 +190,7 @@ function render(){
     var bodyEl=sec.querySelector('.acc-b');
     if(s.id==='carousel'){ bodyEl.appendChild(carouselEditor()); }
     else if(s.id==='images'){ bodyEl.appendChild(imageGrid(fields)); bindInputs(bodyEl); }
-    else { var wrap=document.createElement('div'); wrap.className='grid gap-3'; wrap.innerHTML=fields.map(textCard).join(''); bodyEl.appendChild(wrap); bindInputs(bodyEl); }
+    else { var wrap=document.createElement('div'); wrap.className='grid gap-3'; wrap.innerHTML=fields.map(fieldCard).join(''); bodyEl.appendChild(wrap); bindInputs(bodyEl); }
     sec.querySelector('.acc-h').onclick=function(){ bodyEl.style.display = bodyEl.style.display==='none'?'':'none'; };
     root.appendChild(sec);
   });
@@ -176,7 +210,7 @@ function carouselEditor(){
         +'<div><div class="lbl mb-1">Title (English)</div><input data-i="'+i+'" data-f="en" dir="ltr" value="'+esc(c.en||'')+'" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div>'
         +'<div><div class="lbl mb-1">תגיות עברית (פסיק)</div><input data-i="'+i+'" data-f="tags" dir="rtl" value="'+esc((c.tags||[]).join(', '))+'" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div>'
         +'<div><div class="lbl mb-1">Tags English (comma)</div><input data-i="'+i+'" data-f="tagsEn" dir="ltr" value="'+esc((c.tagsEn||[]).join(', '))+'" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div>'
-        +'<div class="sm:col-span-2"><div class="lbl mb-1">תמונה (שם קובץ או URL)</div><input data-i="'+i+'" data-f="img" dir="ltr" value="'+esc(c.img||'')+'" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div>'
+        +'<div class="sm:col-span-2"><div class="lbl mb-1">תמונה (שם קובץ או URL) · <label class="text-[#2665d6] font-bold cursor-pointer hover:underline">⬆ העלאה<input type="file" accept="image/*" data-cardup="'+i+'" class="hidden"/></label></div><input data-i="'+i+'" data-f="img" dir="ltr" value="'+esc(c.img||'')+'" class="w-full border border-[#e2e4e9] rounded-xl px-3 py-2 text-sm"/></div>'
         +'</div>'
         +'<button data-rm="'+i+'" class="text-red-500 text-sm font-semibold shrink-0 hover:underline">מחיקה</button>'
         +'</div>';
@@ -192,6 +226,16 @@ function carouselEditor(){
         if(f==='img'){var pv=inp.closest('.bg-white').querySelector('.cpv');if(pv)pv.src=(v&&/^https?:|^\//.test(v))?v:('/img/'+v);}
       });
     });
+    box.querySelectorAll('input[data-cardup]').forEach(function(up){
+      up.addEventListener('change',function(){
+        var file=up.files&&up.files[0]; if(!file)return; var i=+up.getAttribute('data-cardup');
+        var lab=up.parentElement,old=lab.firstChild.textContent; lab.firstChild.textContent='מעלה…';
+        uploadImage(file,function(err,url){ lab.firstChild.textContent=old;
+          if(err){alert('העלאה נכשלה: '+err.message);return;}
+          CARDS[i].img=url; var card=up.closest('.bg-white'); var ii=card.querySelector('input[data-f="img"]'); if(ii)ii.value=url; var pv=card.querySelector('.cpv'); if(pv)pv.src=url;
+        });
+      });
+    });
     box.querySelectorAll('button[data-rm]').forEach(function(b){b.onclick=function(){CARDS.splice(+b.getAttribute('data-rm'),1);draw();};});
   }
   draw();
@@ -205,6 +249,7 @@ function clean(bucket){
     if(rec.he!=null&&rec.he!==(f.he||''))o.he=rec.he;
     if(rec.en!=null&&rec.en!==(f.en||''))o.en=rec.en;
     if(rec.url)o.url=rec.url;
+    if(rec.href)o.href=rec.href;
     if(Object.keys(o).length)out[k]=o;
   });
   return out;

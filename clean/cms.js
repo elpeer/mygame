@@ -49,6 +49,19 @@
       });
     });
   }
+  function applyLink(fields, bucket, roots) {
+    if (!bucket) return;
+    fields.forEach(function (f) {
+      if (f.type !== 'link') return;
+      var rec = bucket[f.k]; if (!rec || !rec.href) return;
+      var def = norm(lang === 'he' ? f.he : f.en);
+      roots.forEach(function (root) {
+        if (!root) return;
+        var as = root.querySelectorAll('a');
+        for (var i = 0; i < as.length; i++) { if (norm(as[i].textContent) === def) as[i].setAttribute('href', rec.href); }
+      });
+    });
+  }
   function cardHtml(c) {
     var title = lang === 'en' ? (c.en || c.he || '') : (c.he || '');
     var tags = lang === 'en' ? (c.tagsEn || c.tags || []) : (c.tags || []);
@@ -69,6 +82,8 @@
   function apply(fields, data) {
     var desk = data.desktop || {}, mob = data.mobile || {};
     var frame = document.getElementById('frame'), topnav = document.getElementById('topnav'), mobile = document.getElementById('mobile');
+    try { applyLink(fields, desk, [frame, topnav]); } catch (e) {}
+    try { applyLink(fields, mob, [mobile]); } catch (e) {}
     try { applyText(fields, desk, [frame, topnav]); } catch (e) {}
     try { applyImg(fields, desk, [frame, topnav]); } catch (e) {}
     try { applyText(fields, mob, [mobile]); } catch (e) {}
